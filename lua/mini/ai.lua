@@ -384,14 +384,14 @@ local H = {}
 ---
 ---@usage `require('mini.ai').setup({})` (replace `{}` with your `config` table)
 MiniAi.setup = function(config)
-  -- Export module
-  _G.MiniAi = MiniAi
+	-- Export module
+	_G.MiniAi = MiniAi
 
-  -- Setup config
-  config = H.setup_config(config)
+	-- Setup config
+	config = H.setup_config(config)
 
-  -- Apply config
-  H.apply_config(config)
+	-- Apply config
+	H.apply_config(config)
 end
 
 --- Module config
@@ -491,37 +491,37 @@ end
 --- Mappings `around_next`/`inside_next` and `around_last`/`inside_last` are
 --- essentially `around`/`inside` but using search method `'next'` and `'prev'`.
 MiniAi.config = {
-  -- Table with textobject id as fields, textobject specification as values.
-  -- Also use this to disable builtin textobjects. See |MiniAi.config|.
-  custom_textobjects = nil,
+	-- Table with textobject id as fields, textobject specification as values.
+	-- Also use this to disable builtin textobjects. See |MiniAi.config|.
+	custom_textobjects = nil,
 
-  -- Module mappings. Use `''` (empty string) to disable one.
-  mappings = {
-    -- Main textobject prefixes
-    around = 'a',
-    inside = 'i',
+	-- Module mappings. Use `''` (empty string) to disable one.
+	mappings = {
+		-- Main textobject prefixes
+		around = "a",
+		inside = "i",
 
-    -- Next/last textobjects
-    around_next = 'an',
-    inside_next = 'in',
-    around_last = 'al',
-    inside_last = 'il',
+		-- Next/last textobjects
+		around_next = "an",
+		inside_next = "in",
+		around_last = "al",
+		inside_last = "il",
 
-    -- Move cursor to corresponding edge of `a` textobject
-    goto_left = 'g[',
-    goto_right = 'g]',
-  },
+		-- Move cursor to corresponding edge of `a` textobject
+		goto_left = "g[",
+		goto_right = "g]",
+	},
 
-  -- Number of lines within which textobject is searched
-  n_lines = 50,
+	-- Number of lines within which textobject is searched
+	n_lines = 50,
 
-  -- How to search for object (first inside current line, then inside
-  -- neighborhood). One of 'cover', 'cover_or_next', 'cover_or_prev',
-  -- 'cover_or_nearest', 'next', 'prev', 'nearest'.
-  search_method = 'cover_or_next',
+	-- How to search for object (first inside current line, then inside
+	-- neighborhood). One of 'cover', 'cover_or_next', 'cover_or_prev',
+	-- 'cover_or_nearest', 'next', 'prev', 'nearest'.
+	search_method = "cover_or_next",
 
-  -- Whether to disable showing non-error feedback
-  silent = false,
+	-- Whether to disable showing non-error feedback
+	silent = false,
 }
 --minidoc_afterlines_end
 
@@ -547,31 +547,37 @@ MiniAi.config = {
 ---@return table|nil Region of textobject or `nil` if no textobject different
 ---   from `opts.reference_region` was consecutively found `opts.n_times` times.
 MiniAi.find_textobject = function(ai_type, id, opts)
-  if not (ai_type == 'a' or ai_type == 'i') then H.error([[`ai_type` should be one of 'a' or 'i'.]]) end
-  opts = vim.tbl_deep_extend('force', H.get_default_opts(), opts or {})
-  H.validate_search_method(opts.search_method)
+	if not (ai_type == "a" or ai_type == "i") then
+		H.error([[`ai_type` should be one of 'a' or 'i'.]])
+	end
+	opts = vim.tbl_deep_extend("force", H.get_default_opts(), opts or {})
+	H.validate_search_method(opts.search_method)
 
-  -- Get textobject specification
-  local tobj_spec = H.get_textobject_spec(id, { ai_type, id, opts })
-  if tobj_spec == nil then return end
-  if H.is_region(tobj_spec) then return tobj_spec end
+	-- Get textobject specification
+	local tobj_spec = H.get_textobject_spec(id, { ai_type, id, opts })
+	if tobj_spec == nil then
+		return
+	end
+	if H.is_region(tobj_spec) then
+		return tobj_spec
+	end
 
-  -- Find region
-  local res = H.find_textobject_region(tobj_spec, ai_type, opts)
+	-- Find region
+	local res = H.find_textobject_region(tobj_spec, ai_type, opts)
 
-  if res == nil then
-    local msg = string.format(
-      [[No textobject %s found covering region%s within %d line%s and `search_method = '%s'`.]],
-      vim.inspect(ai_type .. id),
-      opts.n_times == 1 and '' or (' %s times'):format(opts.n_times),
-      opts.n_lines,
-      opts.n_lines == 1 and '' or 's',
-      opts.search_method
-    )
-    H.message(msg)
-  end
+	if res == nil then
+		local msg = string.format(
+			[[No textobject %s found covering region%s within %d line%s and `search_method = '%s'`.]],
+			vim.inspect(ai_type .. id),
+			opts.n_times == 1 and "" or (" %s times"):format(opts.n_times),
+			opts.n_lines,
+			opts.n_lines == 1 and "" or "s",
+			opts.search_method
+		)
+		H.message(msg)
+	end
 
-  return res
+	return res
 end
 
 --- Move cursor to edge of textobject
@@ -583,40 +589,46 @@ end
 ---   `opts.n_times` means number of actual jumps (important when cursor
 ---   already on the potential jump spot).
 MiniAi.move_cursor = function(side, ai_type, id, opts)
-  if not (side == 'left' or side == 'right') then H.error([[`side` should be one of 'left' or 'right'.]]) end
-  opts = opts or {}
-  local init_pos = vim.api.nvim_win_get_cursor(0)
+	if not (side == "left" or side == "right") then
+		H.error([[`side` should be one of 'left' or 'right'.]])
+	end
+	opts = opts or {}
+	local init_pos = vim.api.nvim_win_get_cursor(0)
 
-  -- Compute single textobject first to find out if it would move the cursor.
-  -- If not, then eventual `n_times` should be bigger by 1 to imitate `n_times`
-  -- *actual* jumps. This implements consecutive jumps and has logic of "If
-  -- cursor is strictly inside region, move to its side first".
-  local new_opts = vim.tbl_deep_extend('force', opts, { n_times = 1 })
-  local tobj_single = MiniAi.find_textobject(ai_type, id, new_opts)
-  if tobj_single == nil then return end
-  local tobj_side = side == 'left' and 'from' or 'to'
+	-- Compute single textobject first to find out if it would move the cursor.
+	-- If not, then eventual `n_times` should be bigger by 1 to imitate `n_times`
+	-- *actual* jumps. This implements consecutive jumps and has logic of "If
+	-- cursor is strictly inside region, move to its side first".
+	local new_opts = vim.tbl_deep_extend("force", opts, { n_times = 1 })
+	local tobj_single = MiniAi.find_textobject(ai_type, id, new_opts)
+	if tobj_single == nil then
+		return
+	end
+	local tobj_side = side == "left" and "from" or "to"
 
-  -- Allow empty region
-  tobj_single.to = tobj_single.to or tobj_single.from
+	-- Allow empty region
+	tobj_single.to = tobj_single.to or tobj_single.from
 
-  new_opts.n_times = opts.n_times or 1
-  if (init_pos[1] == tobj_single[tobj_side].line) and (init_pos[2] == tobj_single[tobj_side].col - 1) then
-    new_opts.n_times = new_opts.n_times + 1
-  end
+	new_opts.n_times = opts.n_times or 1
+	if (init_pos[1] == tobj_single[tobj_side].line) and (init_pos[2] == tobj_single[tobj_side].col - 1) then
+		new_opts.n_times = new_opts.n_times + 1
+	end
 
-  -- Compute actually needed textobject while avoiding unnecessary computation
-  -- in a most common usage (`v:count1 == 1`)
-  local pos = tobj_single[tobj_side]
-  if new_opts.n_times > 1 then
-    local tobj = MiniAi.find_textobject(ai_type, id, new_opts)
-    if tobj == nil then return end
-    tobj.to = tobj.to or tobj.from
-    pos = tobj[tobj_side]
-  end
+	-- Compute actually needed textobject while avoiding unnecessary computation
+	-- in a most common usage (`v:count1 == 1`)
+	local pos = tobj_single[tobj_side]
+	if new_opts.n_times > 1 then
+		local tobj = MiniAi.find_textobject(ai_type, id, new_opts)
+		if tobj == nil then
+			return
+		end
+		tobj.to = tobj.to or tobj.from
+		pos = tobj[tobj_side]
+	end
 
-  -- Move cursor and open enough folds
-  vim.api.nvim_win_set_cursor(0, { pos.line, pos.col - 1 })
-  vim.cmd('normal! zv')
+	-- Move cursor and open enough folds
+	vim.api.nvim_win_set_cursor(0, { pos.line, pos.col - 1 })
+	vim.cmd("normal! zv")
 end
 
 --- Generate common textobject specifications
@@ -673,119 +685,133 @@ MiniAi.gen_spec = {}
 ---     Default: `{ '%b""', "%b''", '%b()', '%b[]', '%b{}' }` (separators
 ---     inside balanced quotes or brackets are ignored).
 MiniAi.gen_spec.argument = function(opts)
-  opts = vim.tbl_deep_extend('force', {
-    brackets = { '%b()', '%b[]', '%b{}' },
-    separator = ',',
-    exclude_regions = { '%b""', "%b''", '%b()', '%b[]', '%b{}' },
-  }, opts or {})
+	opts = vim.tbl_deep_extend("force", {
+		brackets = { "%b()", "%b[]", "%b{}" },
+		separator = ",",
+		exclude_regions = { '%b""', "%b''", "%b()", "%b[]", "%b{}" },
+	}, opts or {})
 
-  local brackets, separator, exclude_regions = opts.brackets, opts.separator, opts.exclude_regions
+	local brackets, separator, exclude_regions = opts.brackets, opts.separator, opts.exclude_regions
 
-  local res = {}
-  -- Match brackets
-  res[1] = brackets
+	local res = {}
+	-- Match brackets
+	res[1] = brackets
 
-  -- Match argument with both left and right separators/brackets
-  res[2] = function(s, init)
-    -- Cache string separators per spec as they are used multiple times.
-    -- Storing per spec allows coexistence of several argument specifications.
-    H.cache.argument_sep_spans = H.cache.argument_sep_spans or {}
-    H.cache.argument_sep_spans[res] = H.cache.argument_sep_spans[res] or {}
-    local sep_spans = H.cache.argument_sep_spans[res][s] or H.arg_get_separator_spans(s, separator, exclude_regions)
-    H.cache.argument_sep_spans[res][s] = sep_spans
+	-- Match argument with both left and right separators/brackets
+	res[2] = function(s, init)
+		-- Cache string separators per spec as they are used multiple times.
+		-- Storing per spec allows coexistence of several argument specifications.
+		H.cache.argument_sep_spans = H.cache.argument_sep_spans or {}
+		H.cache.argument_sep_spans[res] = H.cache.argument_sep_spans[res] or {}
+		local sep_spans = H.cache.argument_sep_spans[res][s] or H.arg_get_separator_spans(s, separator, exclude_regions)
+		H.cache.argument_sep_spans[res][s] = sep_spans
 
-    -- Return span fully on right of `init`, `nil` otherwise
-    -- For first argument returns left bracket; for last - right one.
-    for i = 1, #sep_spans - 1 do
-      if init <= sep_spans[i][1] then return sep_spans[i][1], sep_spans[i + 1][2] end
-    end
+		-- Return span fully on right of `init`, `nil` otherwise
+		-- For first argument returns left bracket; for last - right one.
+		for i = 1, #sep_spans - 1 do
+			if init <= sep_spans[i][1] then
+				return sep_spans[i][1], sep_spans[i + 1][2]
+			end
+		end
 
-    return nil
-  end
+		return nil
+	end
 
-  -- Make extraction part
-  --
-  -- Extraction of `a` type depends on argument number, `i` - as `a` but
-  -- without separators and inner whitespace. The reason for this complex
-  -- solution are the following requirements:
-  -- - Don't match argument region when cursor is on the outer bracket.
-  --   Example: `f(xxx)` should select argument only when cursor is on 'x'.
-  -- - Don't select edge whitespace for first and last argument BUT MATCH WHEN
-  --   CURSOR IS ON THEM which needs to match edge whitespace right until the
-  --   extraction part. This is useful when working with padded brackets.
-  --   Example for `f(  xx  ,  yy  )`:
-  --     - `a` object should select 'xx  ,' when cursor is on all '  xx  ';
-  --       should select ',  yy' when cursor is on all '  yy  '.
-  --     - `i` object should select 'xx' when cursor is on all '  xx  ';
-  --       should select 'yy' when cursor is on all '  yy  '.
-  --
-  -- At this stage whether argument is first, middle, last, or single is
-  -- determined by presence of matching separator at either left or right edge.
-  -- If edge matches separator pattern - it has separator. If not - a bracket.
-  local left_edge_separator = '^' .. separator
-  local find_after_left_separator = function(s)
-    local _, sep_end = s:find(left_edge_separator)
-    if sep_end == nil then return nil end
-    return sep_end + 1
-  end
-  local find_after_left_bracket = function(s)
-    local left_sep = find_after_left_separator(s)
-    if left_sep ~= nil then return nil end
-    return 2
-  end
+	-- Make extraction part
+	--
+	-- Extraction of `a` type depends on argument number, `i` - as `a` but
+	-- without separators and inner whitespace. The reason for this complex
+	-- solution are the following requirements:
+	-- - Don't match argument region when cursor is on the outer bracket.
+	--   Example: `f(xxx)` should select argument only when cursor is on 'x'.
+	-- - Don't select edge whitespace for first and last argument BUT MATCH WHEN
+	--   CURSOR IS ON THEM which needs to match edge whitespace right until the
+	--   extraction part. This is useful when working with padded brackets.
+	--   Example for `f(  xx  ,  yy  )`:
+	--     - `a` object should select 'xx  ,' when cursor is on all '  xx  ';
+	--       should select ',  yy' when cursor is on all '  yy  '.
+	--     - `i` object should select 'xx' when cursor is on all '  xx  ';
+	--       should select 'yy' when cursor is on all '  yy  '.
+	--
+	-- At this stage whether argument is first, middle, last, or single is
+	-- determined by presence of matching separator at either left or right edge.
+	-- If edge matches separator pattern - it has separator. If not - a bracket.
+	local left_edge_separator = "^" .. separator
+	local find_after_left_separator = function(s)
+		local _, sep_end = s:find(left_edge_separator)
+		if sep_end == nil then
+			return nil
+		end
+		return sep_end + 1
+	end
+	local find_after_left_bracket = function(s)
+		local left_sep = find_after_left_separator(s)
+		if left_sep ~= nil then
+			return nil
+		end
+		return 2
+	end
 
-  local right_edge_sep = separator .. '$'
-  local find_before_right_separator = function(s)
-    local sep_start, _ = s:find(right_edge_sep)
-    if sep_start == nil then return nil end
-    return sep_start - 1
-  end
-  local find_before_right_bracket = function(s)
-    local right_sep = find_before_right_separator(s)
-    if right_sep ~= nil then return nil end
-    return s:len() - 1
-  end
+	local right_edge_sep = separator .. "$"
+	local find_before_right_separator = function(s)
+		local sep_start, _ = s:find(right_edge_sep)
+		if sep_start == nil then
+			return nil
+		end
+		return sep_start - 1
+	end
+	local find_before_right_bracket = function(s)
+		local right_sep = find_before_right_separator(s)
+		if right_sep ~= nil then
+			return nil
+		end
+		return s:len() - 1
+	end
 
-  local match_and_include = function(left_type, left_include, right_type, right_include)
-    local find_after_left = left_type == 'bracket' and find_after_left_bracket or find_after_left_separator
-    local find_before_right = right_type == 'bracket' and find_before_right_bracket or find_before_right_separator
+	local match_and_include = function(left_type, left_include, right_type, right_include)
+		local find_after_left = left_type == "bracket" and find_after_left_bracket or find_after_left_separator
+		local find_before_right = right_type == "bracket" and find_before_right_bracket or find_before_right_separator
 
-    return function(s, init)
-      -- Match only once
-      if init > 1 then return nil end
+		return function(s, init)
+			-- Match only once
+			if init > 1 then
+				return nil
+			end
 
-      -- Make sure that string matches left and right targets
-      local left_after, right_before = find_after_left(s), find_before_right(s)
-      if left_after == nil or right_before == nil then return nil end
+			-- Make sure that string matches left and right targets
+			local left_after, right_before = find_after_left(s), find_before_right(s)
+			if left_after == nil or right_before == nil then
+				return nil
+			end
 
-      -- Possibly include matched edge targets
-      local left = left_include and 1 or left_after
-      local right = right_include and s:len() or right_before
+			-- Possibly include matched edge targets
+			local left = left_include and 1 or left_after
+			local right = right_include and s:len() or right_before
 
-      return left, right
-    end
-  end
+			return left, right
+		end
+	end
 
-  local extract_first_arg = '^%s*()().-()%s*' .. separator .. '()$'
-  local extract_nonfirst_arg = '^()' .. separator .. '%s*().-()()%s*$'
-  local extract_single_arg = '^%s*().-()%s*$'
+	local extract_first_arg = "^%s*()().-()%s*" .. separator .. "()$"
+	local extract_nonfirst_arg = "^()" .. separator .. "%s*().-()()%s*$"
+	local extract_single_arg = "^%s*().-()%s*$"
 
-  res[3] = {
-    -- First argument. Include right separator, exclude left whitespace.
-    { match_and_include('bracket', false, 'separator', true), extract_first_arg },
+	res[3] = {
+		-- First argument. Include right separator, exclude left whitespace.
+		{ match_and_include("bracket", false, "separator", true), extract_first_arg },
 
-    -- Middle argument. Include only left separator.
-    { match_and_include('separator', true, 'separator', false), extract_nonfirst_arg },
+		-- Middle argument. Include only left separator.
+		{ match_and_include("separator", true, "separator", false), extract_nonfirst_arg },
 
-    -- Last argument. Include left separator, exclude right whitespace.
-    -- NOTE: it misbehaves for whitespace argument. It's OK because it's rare.
-    { match_and_include('separator', true, 'bracket', false), extract_nonfirst_arg },
+		-- Last argument. Include left separator, exclude right whitespace.
+		-- NOTE: it misbehaves for whitespace argument. It's OK because it's rare.
+		{ match_and_include("separator", true, "bracket", false), extract_nonfirst_arg },
 
-    -- Single argument. Include both whitespace (makes `aa` and `ia` differ).
-    { match_and_include('bracket', false, 'bracket', false), extract_single_arg },
-  }
+		-- Single argument. Include both whitespace (makes `aa` and `ia` differ).
+		{ match_and_include("bracket", false, "bracket", false), extract_single_arg },
+	}
 
-  return res
+	return res
 end
 
 --- Function call specification
@@ -802,9 +828,9 @@ end
 ---     Default: `'[%w_%.]'` (alphanumeric, underscore, or dot).
 ---     Note: should be enclosed in `[]`.
 MiniAi.gen_spec.function_call = function(opts)
-  opts = vim.tbl_deep_extend('force', { name_pattern = '[%w_%.]' }, opts or {})
-  -- Use frontier pattern to select widest possible name
-  return { '%f' .. opts.name_pattern .. opts.name_pattern .. '+%b()', '^.-%(().*()%)$' }
+	opts = vim.tbl_deep_extend("force", { name_pattern = "[%w_%.]" }, opts or {})
+	-- Use frontier pattern to select widest possible name
+	return { "%f" .. opts.name_pattern .. opts.name_pattern .. "+%b()", "^.-%(().*()%)$" }
 end
 
 --- Pair specification
@@ -832,27 +858,31 @@ end
 ---   - <type> - Type of a pair. One of `'non-balanced'` (default), `'balanced'`,
 ---   `'greedy'`.
 MiniAi.gen_spec.pair = function(left, right, opts)
-  if not (type(left) == 'string' and type(right) == 'string') then
-    H.error('Both `left` and `right` should be strings.')
-  end
-  opts = vim.tbl_deep_extend('force', { type = 'non-balanced' }, opts or {})
+	if not (type(left) == "string" and type(right) == "string") then
+		H.error("Both `left` and `right` should be strings.")
+	end
+	opts = vim.tbl_deep_extend("force", { type = "non-balanced" }, opts or {})
 
-  if (opts.type == 'balanced' or opts.type == 'greedy') and not (left:len() == 1 and right:len() == 1) then
-    local msg =
-      string.format([[Both `left` and `right` should be single character for `opts.type == '%s'`.]], opts.type)
-    H.error(msg)
-  end
+	if (opts.type == "balanced" or opts.type == "greedy") and not (left:len() == 1 and right:len() == 1) then
+		local msg =
+			string.format([[Both `left` and `right` should be single character for `opts.type == '%s'`.]], opts.type)
+		H.error(msg)
+	end
 
-  local left_esc = vim.pesc(left)
-  local right_esc = vim.pesc(right)
+	local left_esc = vim.pesc(left)
+	local right_esc = vim.pesc(right)
 
-  if opts.type == 'balanced' then return { string.format('%%b%s%s', left, right), '^.().*().$' } end
-  if opts.type == 'non-balanced' then return { string.format('%s().-()%s', left_esc, right_esc) } end
-  if opts.type == 'greedy' then
-    return { string.format('%%f[%s]%s+()[^%s]-()%s+%%f[^%s]', left_esc, left_esc, left_esc, right_esc, right_esc) }
-  end
+	if opts.type == "balanced" then
+		return { string.format("%%b%s%s", left, right), "^.().*().$" }
+	end
+	if opts.type == "non-balanced" then
+		return { string.format("%s().-()%s", left_esc, right_esc) }
+	end
+	if opts.type == "greedy" then
+		return { string.format("%%f[%s]%s+()[^%s]-()%s+%%f[^%s]", left_esc, left_esc, left_esc, right_esc, right_esc) }
+	end
 
-  H.error([[`opts.type` should be one of 'balanced', 'non-balanced', 'greedy'.]])
+	H.error([[`opts.type` should be one of 'balanced', 'non-balanced', 'greedy'.]])
 end
 
 --- Treesitter specification
@@ -925,24 +955,24 @@ end
 --- |Query:iter_captures()| for how all query captures are iterated in case of
 ---   no 'nvim-treesitter'.
 MiniAi.gen_spec.treesitter = function(ai_captures, opts)
-  opts = vim.tbl_deep_extend('force', { use_nvim_treesitter = true }, opts or {})
-  ai_captures = H.prepare_ai_captures(ai_captures)
+	opts = vim.tbl_deep_extend("force", { use_nvim_treesitter = true }, opts or {})
+	ai_captures = H.prepare_ai_captures(ai_captures)
 
-  return function(ai_type, _, _)
-    -- Get array of matched treesitter nodes
-    local target_captures = ai_captures[ai_type]
-    local has_nvim_treesitter = pcall(require, 'nvim-treesitter') and pcall(require, 'nvim-treesitter.query')
-    local node_querier = (has_nvim_treesitter and opts.use_nvim_treesitter) and H.get_matched_nodes_plugin
-      or H.get_matched_nodes_builtin
-    local matched_nodes = node_querier(target_captures)
+	return function(ai_type, _, _)
+		-- Get array of matched treesitter nodes
+		local target_captures = ai_captures[ai_type]
+		local has_nvim_treesitter = pcall(require, "nvim-treesitter") and pcall(require, "nvim-treesitter.query")
+		local node_querier = (has_nvim_treesitter and opts.use_nvim_treesitter) and H.get_matched_nodes_plugin
+			or H.get_matched_nodes_builtin
+		local matched_nodes = node_querier(target_captures)
 
-    -- Return array of regions
-    return vim.tbl_map(function(node)
-      local line_from, col_from, line_to, col_to = node:range()
-      -- `node:range()` returns 0-based numbers for end-exclusive region
-      return { from = { line = line_from + 1, col = col_from + 1 }, to = { line = line_to + 1, col = col_to } }
-    end, matched_nodes)
-  end
+		-- Return array of regions
+		return vim.tbl_map(function(node)
+			local line_from, col_from, line_to, col_to = node:range()
+			-- `node:range()` returns 0-based numbers for end-exclusive region
+			return { from = { line = line_from + 1, col = col_from + 1 }, to = { line = line_to + 1, col = col_to } }
+		end, matched_nodes)
+	end
 end
 
 --- Visually select textobject region
@@ -957,78 +987,87 @@ end
 ---   - <operator_pending> - Whether selection is for Operator-pending mode.
 ---     Used in that mode's mappings, shouldn't be used directly. Default: `false`.
 MiniAi.select_textobject = function(ai_type, id, opts)
-  if H.is_disabled() then return end
+	if H.is_disabled() then
+		return
+	end
 
-  opts = opts or {}
+	opts = opts or {}
 
-  -- Exit to Normal before getting textobject id. This way invalid id doesn't
-  -- result into staying in current mode (which seems to be more convenient).
-  H.exit_to_normal_mode()
+	-- Exit to Normal before getting textobject id. This way invalid id doesn't
+	-- result into staying in current mode (which seems to be more convenient).
+	H.exit_to_normal_mode()
 
-  local tobj = MiniAi.find_textobject(ai_type, id, opts)
-  if tobj == nil then return end
+	local tobj = MiniAi.find_textobject(ai_type, id, opts)
+	if tobj == nil then
+		return
+	end
 
-  local set_cursor = function(position) vim.api.nvim_win_set_cursor(0, { position.line, position.col - 1 }) end
+	local set_cursor = function(position)
+		vim.api.nvim_win_set_cursor(0, { position.line, position.col - 1 })
+	end
 
-  -- Allow empty regions
-  local tobj_is_empty = tobj.to == nil
-  tobj.to = tobj.to or tobj.from
+	-- Allow empty regions
+	local tobj_is_empty = tobj.to == nil
+	tobj.to = tobj.to or tobj.from
 
-  -- Compute selection type preferring the one coming from textobject
-  local vis_mode = tobj.vis_mode
-  if vis_mode == nil or not H.is_visual_mode(vis_mode) then
-    local prev_vis_mode = vim.fn.visualmode()
-    prev_vis_mode = prev_vis_mode == '' and 'v' or prev_vis_mode
-    vis_mode = opts.vis_mode and vim.api.nvim_replace_termcodes(opts.vis_mode, true, true, true) or prev_vis_mode
-  end
+	-- Compute selection type preferring the one coming from textobject
+	local vis_mode = tobj.vis_mode
+	if vis_mode == nil or not H.is_visual_mode(vis_mode) then
+		local prev_vis_mode = vim.fn.visualmode()
+		prev_vis_mode = prev_vis_mode == "" and "v" or prev_vis_mode
+		vis_mode = opts.vis_mode and vim.api.nvim_replace_termcodes(opts.vis_mode, true, true, true) or prev_vis_mode
+	end
 
-  -- Allow going past end of line in order to collapse multiline regions
-  local cache_virtualedit = vim.o.virtualedit
-  local cache_eventignore = vim.o.eventignore
+	-- Allow going past end of line in order to collapse multiline regions
+	local cache_virtualedit = vim.o.virtualedit
+	local cache_eventignore = vim.o.eventignore
 
-  pcall(function()
-    -- Do nothing in Operator-pending mode for empty region (except `c`, `d`,
-    -- or "replace" from 'mini.operators'). These are hand picked because they
-    -- completely remove selected text, which is necessary for currently only
-    -- possible empty region selection implementation.
-    local is_empty_opending = tobj_is_empty and opts.operator_pending
-    local is_minioperators_replace = vim.v.operator == 'g@' and vim.o.operatorfunc:find('MiniOperators%.replace') ~= nil
-    local is_allowed_empty_opending = vim.v.operator == 'c' or vim.v.operator == 'd' or is_minioperators_replace
-    if is_empty_opending and not is_allowed_empty_opending then
-      H.message('Textobject region is empty. Nothing is done.')
-      return
-    end
+	pcall(function()
+		-- Do nothing in Operator-pending mode for empty region (except `c`, `d`,
+		-- or "replace" from 'mini.operators'). These are hand picked because they
+		-- completely remove selected text, which is necessary for currently only
+		-- possible empty region selection implementation.
+		local is_empty_opending = tobj_is_empty and opts.operator_pending
+		local is_minioperators_replace = vim.v.operator == "g@"
+			and vim.o.operatorfunc:find("MiniOperators%.replace") ~= nil
+		local is_allowed_empty_opending = vim.v.operator == "c" or vim.v.operator == "d" or is_minioperators_replace
+		if is_empty_opending and not is_allowed_empty_opending then
+			H.message("Textobject region is empty. Nothing is done.")
+			return
+		end
 
-    -- Allow setting cursor past line end (allows collapsing multiline region)
-    vim.o.virtualedit = 'onemore'
+		-- Allow setting cursor past line end (allows collapsing multiline region)
+		vim.o.virtualedit = "onemore"
 
-    -- Open enough folds to show left and right edges
-    set_cursor(tobj.from)
-    vim.cmd('normal! zv')
-    set_cursor(tobj.to)
-    vim.cmd('normal! zv')
+		-- Open enough folds to show left and right edges
+		set_cursor(tobj.from)
+		vim.cmd("normal! zv")
+		set_cursor(tobj.to)
+		vim.cmd("normal! zv")
 
-    -- Respect exclusive selection
-    if vim.o.selection == 'exclusive' then vim.cmd('normal! l') end
+		-- Respect exclusive selection
+		if vim.o.selection == "exclusive" then
+			vim.cmd("normal! l")
+		end
 
-    -- Start selection
-    vim.cmd('normal! ' .. vis_mode)
-    set_cursor(tobj.from)
+		-- Start selection
+		vim.cmd("normal! " .. vis_mode)
+		set_cursor(tobj.from)
 
-    if is_empty_opending then
-      -- Add single space (without triggering events) and visually select it.
-      -- Seems like the only way to make `ci)` and `di)` move inside empty
-      -- brackets. Original idea is from 'wellle/targets.vim'.
-      vim.o.eventignore = 'all'
+		if is_empty_opending then
+			-- Add single space (without triggering events) and visually select it.
+			-- Seems like the only way to make `ci)` and `di)` move inside empty
+			-- brackets. Original idea is from 'wellle/targets.vim'.
+			vim.o.eventignore = "all"
 
-      -- First escape from previously started Visual mode
-      vim.cmd([[silent! execute "normal! \<Esc>i \<Esc>v"]])
-    end
-  end)
+			-- First escape from previously started Visual mode
+			vim.cmd([[silent! execute "normal! \<Esc>i \<Esc>v"]])
+		end
+	end)
 
-  -- Restore options
-  vim.o.virtualedit = cache_virtualedit
-  vim.o.eventignore = cache_eventignore
+	-- Restore options
+	vim.o.virtualedit = cache_virtualedit
+	vim.o.eventignore = cache_eventignore
 end
 
 -- Helper data ================================================================
@@ -1040,84 +1079,91 @@ H.cache = {}
 
 -- Builtin textobjects
 H.builtin_textobjects = {
-  -- Use balanced pair for brackets. Use opening ones to possibly remove edge
-  -- whitespace from `i` textobject.
-  ['('] = { '%b()', '^.%s*().-()%s*.$' },
-  [')'] = { '%b()', '^.().*().$' },
-  ['['] = { '%b[]', '^.%s*().-()%s*.$' },
-  [']'] = { '%b[]', '^.().*().$' },
-  ['{'] = { '%b{}', '^.%s*().-()%s*.$' },
-  ['}'] = { '%b{}', '^.().*().$' },
-  ['<'] = { '%b<>', '^.%s*().-()%s*.$' },
-  ['>'] = { '%b<>', '^.().*().$' },
-  -- Use special "same balanced" pattern to select quotes in pairs
-  ["'"] = { "%b''", '^.().*().$' },
-  ['"'] = { '%b""', '^.().*().$' },
-  ['`'] = { '%b``', '^.().*().$' },
-  -- Derived from user prompt
-  ['?'] = function()
-    -- Using cache allows for a dot-repeat without another user input
-    if H.cache.prompted_textobject ~= nil then return H.cache.prompted_textobject end
+	-- Use balanced pair for brackets. Use opening ones to possibly remove edge
+	-- whitespace from `i` textobject.
+	["("] = { "%b()", "^.%s*().-()%s*.$" },
+	[")"] = { "%b()", "^.().*().$" },
+	["["] = { "%b[]", "^.%s*().-()%s*.$" },
+	["]"] = { "%b[]", "^.().*().$" },
+	["{"] = { "%b{}", "^.%s*().-()%s*.$" },
+	["}"] = { "%b{}", "^.().*().$" },
+	["<"] = { "%b<>", "^.%s*().-()%s*.$" },
+	[">"] = { "%b<>", "^.().*().$" },
+	-- Use special "same balanced" pattern to select quotes in pairs
+	["'"] = { "%b''", "^.().*().$" },
+	['"'] = { '%b""', "^.().*().$" },
+	["`"] = { "%b``", "^.().*().$" },
+	-- Derived from user prompt
+	["?"] = function()
+		-- Using cache allows for a dot-repeat without another user input
+		if H.cache.prompted_textobject ~= nil then
+			return H.cache.prompted_textobject
+		end
 
-    local left = H.user_input('Left edge')
-    if left == nil or left == '' then return end
-    local right = H.user_input('Right edge')
-    if right == nil or right == '' then return end
+		local left = H.user_input("Left edge")
+		if left == nil or left == "" then
+			return
+		end
+		local right = H.user_input("Right edge")
+		if right == nil or right == "" then
+			return
+		end
 
-    -- Clean command line from prompt messages (does not work in Visual mode)
-    vim.cmd([[echo '' | redraw]])
+		-- Clean command line from prompt messages (does not work in Visual mode)
+		vim.cmd([[echo '' | redraw]])
 
-    local left_esc, right_esc = vim.pesc(left), vim.pesc(right)
-    local res = { string.format('%s().-()%s', left_esc, right_esc) }
-    H.cache.prompted_textobject = res
-    return res
-  end,
-  -- Argument
-  ['a'] = MiniAi.gen_spec.argument(),
-  -- Brackets
-  ['b'] = { { '%b()', '%b[]', '%b{}' }, '^.().*().$' },
-  -- Function call
-  ['f'] = MiniAi.gen_spec.function_call(),
-  -- Tag
-  ['t'] = { '<(%w-)%f[^<%w][^<>]->.-</%1>', '^<.->().*()</[^/]->$' },
-  -- Quotes
-  ['q'] = { { "%b''", '%b""', '%b``' }, '^.().*().$' },
+		local left_esc, right_esc = vim.pesc(left), vim.pesc(right)
+		local res = { string.format("%s().-()%s", left_esc, right_esc) }
+		H.cache.prompted_textobject = res
+		return res
+	end,
+	-- Argument
+	["a"] = MiniAi.gen_spec.argument(),
+	-- Brackets
+	["b"] = { { "%b()", "%b<>", "%b[]", "%b{}" }, "^.().*().$" },
+	["s"] = { { "%b()", "%b<>", "%b[]", "%b{}" }, "^.().*().$" },
+	-- Function call
+	["f"] = MiniAi.gen_spec.function_call(),
+	-- Tag
+	["t"] = { "<(%w-)%f[^<%w][^<>]->.-</%1>", "^<.->().*()</[^/]->$" },
+	-- Quotes
+	["q"] = { { "%b''", '%b""', "%b``" }, "^.().*().$" },
 }
 
 -- Module's namespaces
 H.ns_id = {
-  -- Track user input
-  input = vim.api.nvim_create_namespace('MiniAiInput'),
+	-- Track user input
+	input = vim.api.nvim_create_namespace("MiniAiInput"),
 }
 
 -- Helper functionality =======================================================
 -- Settings -------------------------------------------------------------------
 H.setup_config = function(config)
-  -- General idea: if some table elements are not present in user-supplied
-  -- `config`, take them from default config
-  vim.validate({ config = { config, 'table', true } })
-  config = vim.tbl_deep_extend('force', vim.deepcopy(H.default_config), config or {})
+	-- General idea: if some table elements are not present in user-supplied
+	-- `config`, take them from default config
+	vim.validate({ config = { config, "table", true } })
+	config = vim.tbl_deep_extend("force", vim.deepcopy(H.default_config), config or {})
 
-  vim.validate({
-    custom_textobjects = { config.custom_textobjects, 'table', true },
-    mappings = { config.mappings, 'table' },
-    n_lines = { config.n_lines, 'number' },
-    search_method = { config.search_method, H.is_search_method },
-    silent = { config.silent, 'boolean' },
-  })
+	vim.validate({
+		custom_textobjects = { config.custom_textobjects, "table", true },
+		mappings = { config.mappings, "table" },
+		n_lines = { config.n_lines, "number" },
+		search_method = { config.search_method, H.is_search_method },
+		silent = { config.silent, "boolean" },
+	})
 
-  vim.validate({
-    ['mappings.around'] = { config.mappings.around, 'string' },
-    ['mappings.inside'] = { config.mappings.inside, 'string' },
-    ['mappings.around_next'] = { config.mappings.around_next, 'string' },
-    ['mappings.inside_next'] = { config.mappings.inside_next, 'string' },
-    ['mappings.around_last'] = { config.mappings.around_last, 'string' },
-    ['mappings.inside_last'] = { config.mappings.inside_last, 'string' },
-    ['mappings.goto_left'] = { config.mappings.goto_left, 'string' },
-    ['mappings.goto_right'] = { config.mappings.goto_right, 'string' },
-  })
+	vim.validate({
+		["mappings.around"] = { config.mappings.around, "string" },
+		["mappings.inside"] = { config.mappings.inside, "string" },
+		["mappings.around_next"] = { config.mappings.around_next, "string" },
+		["mappings.inside_next"] = { config.mappings.inside_next, "string" },
+		["mappings.around_last"] = { config.mappings.around_last, "string" },
+		["mappings.inside_last"] = { config.mappings.inside_last, "string" },
+		["mappings.goto_left"] = { config.mappings.goto_left, "string" },
+		["mappings.goto_right"] = { config.mappings.goto_right, "string" },
+	})
 
-  return config
+	return config
 end
 
 --stylua: ignore
@@ -1155,173 +1201,207 @@ H.apply_config = function(config)
   m('o', maps.inside_last, make_tobj('o', 'i', 'prev'), { desc = 'Inside last textobject' })
 end
 
-H.is_disabled = function() return vim.g.miniai_disable == true or vim.b.miniai_disable == true end
+H.is_disabled = function()
+	return vim.g.miniai_disable == true or vim.b.miniai_disable == true
+end
 
 H.get_config = function(config)
-  return vim.tbl_deep_extend('force', MiniAi.config, vim.b.miniai_config or {}, config or {})
+	return vim.tbl_deep_extend("force", MiniAi.config, vim.b.miniai_config or {}, config or {})
 end
 
 H.is_search_method = function(x, x_name)
-  x = x or H.get_config().search_method
-  x_name = x_name or '`config.search_method`'
+	x = x or H.get_config().search_method
+	x_name = x_name or "`config.search_method`"
 
-  local allowed_methods = vim.tbl_keys(H.span_compare_methods)
-  if vim.tbl_contains(allowed_methods, x) then return true end
+	local allowed_methods = vim.tbl_keys(H.span_compare_methods)
+	if vim.tbl_contains(allowed_methods, x) then
+		return true
+	end
 
-  table.sort(allowed_methods)
-  local allowed_methods_string = table.concat(vim.tbl_map(vim.inspect, allowed_methods), ', ')
-  local msg = ([[%s should be one of %s.]]):format(x_name, allowed_methods_string)
-  return false, msg
+	table.sort(allowed_methods)
+	local allowed_methods_string = table.concat(vim.tbl_map(vim.inspect, allowed_methods), ", ")
+	local msg = ([[%s should be one of %s.]]):format(x_name, allowed_methods_string)
+	return false, msg
 end
 
 H.validate_search_method = function(x, x_name)
-  local is_valid, msg = H.is_search_method(x, x_name)
-  if not is_valid then H.error(msg) end
+	local is_valid, msg = H.is_search_method(x, x_name)
+	if not is_valid then
+		H.error(msg)
+	end
 end
 
 -- Mappings -------------------------------------------------------------------
 H.expr_textobject = function(mode, ai_type, opts)
-  local tobj_id = H.user_textobject_id(ai_type)
+	local tobj_id = H.user_textobject_id(ai_type)
 
-  if tobj_id == nil then return mode == 'o' and '<Esc>' or '' end
+	if tobj_id == nil then
+		return mode == "o" and "<Esc>" or ""
+	end
 
-  -- Possibly fall back to builtin `a`/`i` textobjects
-  if H.is_disabled() or not H.is_valid_textobject_id(tobj_id) then
-    local mappings = H.get_config().mappings
-    local main_key = mappings[ai_type == 'a' and 'around' or 'inside']
-    local res = main_key .. tobj_id
-    -- If fallback is an existing user mapping, prepend it with '<Ignore>'.
-    -- This deals with `:h recursive_mapping`. Shouldn't prepend if it is a
-    -- builtin textobject. Also see https://github.com/vim/vim/issues/10907 .
-    if vim.fn.maparg(res, mode) ~= '' then res = '<Ignore>' .. res end
-    return res
-  end
-  opts = vim.tbl_deep_extend('force', H.get_default_opts(), opts or {})
+	-- Possibly fall back to builtin `a`/`i` textobjects
+	if H.is_disabled() or not H.is_valid_textobject_id(tobj_id) then
+		local mappings = H.get_config().mappings
+		local main_key = mappings[ai_type == "a" and "around" or "inside"]
+		local res = main_key .. tobj_id
+		-- If fallback is an existing user mapping, prepend it with '<Ignore>'.
+		-- This deals with `:h recursive_mapping`. Shouldn't prepend if it is a
+		-- builtin textobject. Also see https://github.com/vim/vim/issues/10907 .
+		if vim.fn.maparg(res, mode) ~= "" then
+			res = "<Ignore>" .. res
+		end
+		return res
+	end
+	opts = vim.tbl_deep_extend("force", H.get_default_opts(), opts or {})
 
-  -- Clear cache
-  H.cache = {}
+	-- Clear cache
+	H.cache = {}
 
-  -- Construct call options based on mode
-  local reference_region_field, operator_pending_field, vis_mode_field = 'nil', 'nil', 'nil'
+	-- Construct call options based on mode
+	local reference_region_field, operator_pending_field, vis_mode_field = "nil", "nil", "nil"
 
-  if mode == 'x' then
-    -- Use Visual selection as reference region for Visual mode mappings
-    reference_region_field = vim.inspect(H.get_visual_region(), { newline = '', indent = '' })
-  end
+	if mode == "x" then
+		-- Use Visual selection as reference region for Visual mode mappings
+		reference_region_field = vim.inspect(H.get_visual_region(), { newline = "", indent = "" })
+	end
 
-  if mode == 'o' then
-    -- Supply `operator_pending` flag in Operator-pending mode
-    operator_pending_field = 'true'
+	if mode == "o" then
+		-- Supply `operator_pending` flag in Operator-pending mode
+		operator_pending_field = "true"
 
-    -- Take into account forced Operator-pending modes ('nov', 'noV', 'no<C-V>')
-    vis_mode_field = vim.fn.mode(1):gsub('^no', '')
-    vis_mode_field = vim.inspect(vis_mode_field == '' and 'v' or vis_mode_field)
-  end
+		-- Take into account forced Operator-pending modes ('nov', 'noV', 'no<C-V>')
+		vis_mode_field = vim.fn.mode(1):gsub("^no", "")
+		vis_mode_field = vim.inspect(vis_mode_field == "" and "v" or vis_mode_field)
+	end
 
-  -- Make expression
-  return '<Cmd>lua '
-    .. string.format(
-      [[MiniAi.select_textobject('%s', '%s', { search_method = '%s', n_times = %d, reference_region = %s, operator_pending = %s, vis_mode = %s })]],
-      ai_type,
-      vim.fn.escape(tobj_id, "'"),
-      opts.search_method,
-      vim.v.count1,
-      reference_region_field,
-      operator_pending_field,
-      vis_mode_field
-    )
-    .. '<CR>'
+	-- Make expression
+	return "<Cmd>lua "
+		.. string.format(
+			[[MiniAi.select_textobject('%s', '%s', { search_method = '%s', n_times = %d, reference_region = %s, operator_pending = %s, vis_mode = %s })]],
+			ai_type,
+			vim.fn.escape(tobj_id, "'"),
+			opts.search_method,
+			vim.v.count1,
+			reference_region_field,
+			operator_pending_field,
+			vis_mode_field
+		)
+		.. "<CR>"
 end
 
 H.expr_motion = function(side)
-  if H.is_disabled() then return '' end
+	if H.is_disabled() then
+		return ""
+	end
 
-  if not (side == 'left' or side == 'right') then H.error([[`side` should be one of 'left' or 'right'.]]) end
+	if not (side == "left" or side == "right") then
+		H.error([[`side` should be one of 'left' or 'right'.]])
+	end
 
-  -- Get user input
-  local tobj_id = H.user_textobject_id('a')
-  if tobj_id == nil then return end
+	-- Get user input
+	local tobj_id = H.user_textobject_id("a")
+	if tobj_id == nil then
+		return
+	end
 
-  -- Clear cache
-  H.cache = {}
+	-- Clear cache
+	H.cache = {}
 
-  -- Make expression for moving cursor
-  return '<Cmd>lua '
-    .. string.format(
-      [[MiniAi.move_cursor('%s', 'a', '%s', { n_times = %d })]],
-      side,
-      vim.fn.escape(tobj_id, "'"),
-      vim.v.count1
-    )
-    .. '<CR>'
+	-- Make expression for moving cursor
+	return "<Cmd>lua "
+		.. string.format(
+			[[MiniAi.move_cursor('%s', 'a', '%s', { n_times = %d })]],
+			side,
+			vim.fn.escape(tobj_id, "'"),
+			vim.v.count1
+		)
+		.. "<CR>"
 end
 
 -- Work with textobject info --------------------------------------------------
 H.make_textobject_table = function()
-  -- Extend builtins with data from `config`. Don't use `tbl_deep_extend()`
-  -- because only top level keys should be merged.
-  local textobjects = vim.tbl_extend('force', H.builtin_textobjects, H.get_config().custom_textobjects or {})
+	-- Extend builtins with data from `config`. Don't use `tbl_deep_extend()`
+	-- because only top level keys should be merged.
+	local textobjects = vim.tbl_extend("force", H.builtin_textobjects, H.get_config().custom_textobjects or {})
 
-  -- Use default textobject pattern only for some characters: punctuation,
-  -- whitespace, digits.
-  return setmetatable(textobjects, {
-    __index = function(_, key)
-      if not (type(key) == 'string' and string.find(key, '^[%p%s%d]$')) then return end
-      local key_esc = vim.pesc(key)
-      -- Use `%f[]` to ensure maximum stretch in both directions. Include only
-      -- right edge in `a` textobject.
-      -- Example output: '_()()[^_]-()_+%f[^_]()'
-      return { string.format('%s()()[^%s]-()%s+%%f[^%s]()', key_esc, key_esc, key_esc, key_esc) }
-    end,
-  })
+	-- Use default textobject pattern only for some characters: punctuation,
+	-- whitespace, digits.
+	return setmetatable(textobjects, {
+		__index = function(_, key)
+			if not (type(key) == "string" and string.find(key, "^[%p%s%d]$")) then
+				return
+			end
+			local key_esc = vim.pesc(key)
+			-- Use `%f[]` to ensure maximum stretch in both directions. Include only
+			-- right edge in `a` textobject.
+			-- Example output: '_()()[^_]-()_+%f[^_]()'
+			return { string.format("%s()()[^%s]-()%s+%%f[^%s]()", key_esc, key_esc, key_esc, key_esc) }
+		end,
+	})
 end
 
 H.get_textobject_spec = function(id, args)
-  local textobject_tbl = H.make_textobject_table()
-  local spec = textobject_tbl[id]
+	local textobject_tbl = H.make_textobject_table()
+	local spec = textobject_tbl[id]
 
-  -- Allow function returning spec or region(s)
-  if vim.is_callable(spec) then spec = spec(unpack(args)) end
+	-- Allow function returning spec or region(s)
+	if vim.is_callable(spec) then
+		spec = spec(unpack(args))
+	end
 
-  -- Wrap callable tables to be an actual functions. Otherwise they might be
-  -- confused with list of patterns.
-  if H.is_composed_pattern(spec) then return vim.tbl_map(H.wrap_callable_table, spec) end
+	-- Wrap callable tables to be an actual functions. Otherwise they might be
+	-- confused with list of patterns.
+	if H.is_composed_pattern(spec) then
+		return vim.tbl_map(H.wrap_callable_table, spec)
+	end
 
-  if not (H.is_region(spec) or H.is_region_array(spec)) then return nil end
-  return spec
+	if not (H.is_region(spec) or H.is_region_array(spec)) then
+		return nil
+	end
+	return spec
 end
 
 H.is_valid_textobject_id = function(id)
-  local spec = H.make_textobject_table()[id]
-  return type(spec) == 'table' or vim.is_callable(spec)
+	local spec = H.make_textobject_table()[id]
+	return type(spec) == "table" or vim.is_callable(spec)
 end
 
 H.is_region = function(x)
-  if type(x) ~= 'table' then return false end
-  local from_is_valid = type(x.from) == 'table' and type(x.from.line) == 'number' and type(x.from.col) == 'number'
-  -- Allow `to` to be `nil` to describe empty regions
-  local to_is_valid = true
-  if x.to ~= nil then
-    to_is_valid = type(x.to) == 'table' and type(x.to.line) == 'number' and type(x.to.col) == 'number'
-  end
-  return from_is_valid and to_is_valid
+	if type(x) ~= "table" then
+		return false
+	end
+	local from_is_valid = type(x.from) == "table" and type(x.from.line) == "number" and type(x.from.col) == "number"
+	-- Allow `to` to be `nil` to describe empty regions
+	local to_is_valid = true
+	if x.to ~= nil then
+		to_is_valid = type(x.to) == "table" and type(x.to.line) == "number" and type(x.to.col) == "number"
+	end
+	return from_is_valid and to_is_valid
 end
 
 H.is_region_array = function(x)
-  if not H.islist(x) then return false end
-  for _, v in ipairs(x) do
-    if not H.is_region(v) then return false end
-  end
-  return true
+	if not H.islist(x) then
+		return false
+	end
+	for _, v in ipairs(x) do
+		if not H.is_region(v) then
+			return false
+		end
+	end
+	return true
 end
 
 H.is_composed_pattern = function(x)
-  if not (H.islist(x) and #x > 0) then return false end
-  for _, val in ipairs(x) do
-    local val_type = type(val)
-    if not (val_type == 'table' or val_type == 'string' or vim.is_callable(val)) then return false end
-  end
-  return true
+	if not (H.islist(x) and #x > 0) then
+		return false
+	end
+	for _, val in ipairs(x) do
+		local val_type = type(val)
+		if not (val_type == "table" or val_type == "string" or vim.is_callable(val)) then
+			return false
+		end
+	end
+	return true
 end
 
 -- Work with finding textobjects ----------------------------------------------
@@ -1330,175 +1410,215 @@ end
 ---@param opts table Textobject options with all fields present.
 ---@private
 H.find_textobject_region = function(tobj_spec, ai_type, opts)
-  local reference_region, n_times, n_lines = opts.reference_region, opts.n_times, opts.n_lines
+	local reference_region, n_times, n_lines = opts.reference_region, opts.n_times, opts.n_lines
 
-  if n_times == 0 then return end
+	if n_times == 0 then
+		return
+	end
 
-  -- Find `n_times` matching spans evolving from reference region span
-  -- First try to find inside 0-neighborhood
-  local neigh = H.get_neighborhood(reference_region, 0)
-  local reference_span = neigh.region_to_span(reference_region)
+	-- Find `n_times` matching spans evolving from reference region span
+	-- First try to find inside 0-neighborhood
+	local neigh = H.get_neighborhood(reference_region, 0)
+	local reference_span = neigh.region_to_span(reference_region)
 
-  local find_next = function(cur_reference_span)
-    local res = H.find_best_match(neigh, tobj_spec, cur_reference_span, opts)
+	local find_next = function(cur_reference_span)
+		local res = H.find_best_match(neigh, tobj_spec, cur_reference_span, opts)
 
-    -- If didn't find in 0-neighborhood, possibly try extend one
-    if res.span == nil then
-      -- Stop if no need to extend neighborhood
-      if n_lines == 0 or neigh.n_neighbors > 0 then return {} end
+		-- If didn't find in 0-neighborhood, possibly try extend one
+		if res.span == nil then
+			-- Stop if no need to extend neighborhood
+			if n_lines == 0 or neigh.n_neighbors > 0 then
+				return {}
+			end
 
-      -- Update data with respect to new neighborhood
-      local cur_reference_region = neigh.span_to_region(cur_reference_span)
-      neigh = H.get_neighborhood(reference_region, n_lines)
-      reference_span = neigh.region_to_span(reference_region)
-      cur_reference_span = neigh.region_to_span(cur_reference_region)
+			-- Update data with respect to new neighborhood
+			local cur_reference_region = neigh.span_to_region(cur_reference_span)
+			neigh = H.get_neighborhood(reference_region, n_lines)
+			reference_span = neigh.region_to_span(reference_region)
+			cur_reference_span = neigh.region_to_span(cur_reference_region)
 
-      -- Recompute based on new neighborhood
-      res = H.find_best_match(neigh, tobj_spec, cur_reference_span, opts)
-    end
+			-- Recompute based on new neighborhood
+			res = H.find_best_match(neigh, tobj_spec, cur_reference_span, opts)
+		end
 
-    return res
-  end
+		return res
+	end
 
-  local find_res = { span = reference_span }
-  for _ = 1, n_times do
-    find_res = find_next(find_res.span)
-    if find_res.span == nil then return end
-  end
+	local find_res = { span = reference_span }
+	for _ = 1, n_times do
+		find_res = find_next(find_res.span)
+		if find_res.span == nil then
+			return
+		end
+	end
 
-  -- Extract final span
-  local extract = function(span, extract_pattern)
-    -- Use `nil` extract pattern to allow array of regions as textobject spec
-    if extract_pattern == nil then return span end
+	-- Extract final span
+	local extract = function(span, extract_pattern)
+		-- Use `nil` extract pattern to allow array of regions as textobject spec
+		if extract_pattern == nil then
+			return span
+		end
 
-    -- First extract local (with respect to best matched span) span
-    local s = neigh['1d']:sub(span.from, span.to - 1)
-    local local_span = H.extract_span(s, extract_pattern, ai_type)
+		-- First extract local (with respect to best matched span) span
+		local s = neigh["1d"]:sub(span.from, span.to - 1)
+		local local_span = H.extract_span(s, extract_pattern, ai_type)
 
-    -- Convert local span to global
-    local offset = span.from - 1
-    return { from = local_span.from + offset, to = local_span.to + offset }
-  end
+		-- Convert local span to global
+		local offset = span.from - 1
+		return { from = local_span.from + offset, to = local_span.to + offset }
+	end
 
-  local final_span = extract(find_res.span, find_res.extract_pattern)
+	local final_span = extract(find_res.span, find_res.extract_pattern)
 
-  -- Ensure that output region is different from reference. This is needed if
-  -- final span was shrunk during extraction and resulted into equal to input
-  -- reference. This powers consecutive application of most `i` textobjects.
-  if H.is_span_covering(reference_span, final_span) then
-    find_res = find_next(find_res.span)
-    if find_res.span == nil then return end
-    final_span = extract(find_res.span, find_res.extract_pattern)
-    if H.is_span_covering(reference_span, final_span) then return end
-  end
+	-- Ensure that output region is different from reference. This is needed if
+	-- final span was shrunk during extraction and resulted into equal to input
+	-- reference. This powers consecutive application of most `i` textobjects.
+	if H.is_span_covering(reference_span, final_span) then
+		find_res = find_next(find_res.span)
+		if find_res.span == nil then
+			return
+		end
+		final_span = extract(find_res.span, find_res.extract_pattern)
+		if H.is_span_covering(reference_span, final_span) then
+			return
+		end
+	end
 
-  -- Convert to region
-  return neigh.span_to_region(final_span)
+	-- Convert to region
+	return neigh.span_to_region(final_span)
 end
 
 H.get_default_opts = function()
-  local config = H.get_config()
-  local cur_pos = vim.api.nvim_win_get_cursor(0)
-  return {
-    n_lines = config.n_lines,
-    n_times = vim.v.count1,
-    -- Empty region at cursor position
-    reference_region = { from = { line = cur_pos[1], col = cur_pos[2] + 1 } },
-    search_method = config.search_method,
-  }
+	local config = H.get_config()
+	local cur_pos = vim.api.nvim_win_get_cursor(0)
+	return {
+		n_lines = config.n_lines,
+		n_times = vim.v.count1,
+		-- Empty region at cursor position
+		reference_region = { from = { line = cur_pos[1], col = cur_pos[2] + 1 } },
+		search_method = config.search_method,
+	}
 end
 
 -- Work with argument textobject ----------------------------------------------
 H.arg_get_separator_spans = function(s, sep_pattern, exclude_regions)
-  if s:len() <= 2 then return {} end
+	if s:len() <= 2 then
+		return {}
+	end
 
-  -- Pre-compute edge separator spans (assumes edge characters are brackets)
-  local left_bracket_span = { 1, 1 }
-  local right_bracket_span = { s:len(), s:len() }
+	-- Pre-compute edge separator spans (assumes edge characters are brackets)
+	local left_bracket_span = { 1, 1 }
+	local right_bracket_span = { s:len(), s:len() }
 
-  -- Get all separator spans (meaning separator is allowed to match more than
-  -- a single character)
-  local sep_spans = {}
-  s:gsub('()' .. sep_pattern .. '()', function(l, r) table.insert(sep_spans, { l, r - 1 }) end)
-  if #sep_spans == 0 then return { left_bracket_span, right_bracket_span } end
+	-- Get all separator spans (meaning separator is allowed to match more than
+	-- a single character)
+	local sep_spans = {}
+	s:gsub("()" .. sep_pattern .. "()", function(l, r)
+		table.insert(sep_spans, { l, r - 1 })
+	end)
+	if #sep_spans == 0 then
+		return { left_bracket_span, right_bracket_span }
+	end
 
-  -- Remove separators that are in "excluded regions": by default, inside
-  -- brackets or quotes
-  local inner_s, forbidden = s:sub(2, -2), {}
-  local add_to_forbidden = function(l, r) table.insert(forbidden, { l + 1, r }) end
+	-- Remove separators that are in "excluded regions": by default, inside
+	-- brackets or quotes
+	local inner_s, forbidden = s:sub(2, -2), {}
+	local add_to_forbidden = function(l, r)
+		table.insert(forbidden, { l + 1, r })
+	end
 
-  for _, pat in ipairs(exclude_regions) do
-    local capture_pat = string.format('()%s()', pat)
-    inner_s:gsub(capture_pat, add_to_forbidden)
-  end
+	for _, pat in ipairs(exclude_regions) do
+		local capture_pat = string.format("()%s()", pat)
+		inner_s:gsub(capture_pat, add_to_forbidden)
+	end
 
-  local res = vim.tbl_filter(function(x) return not H.is_span_inside_spans(x, forbidden) end, sep_spans)
+	local res = vim.tbl_filter(function(x)
+		return not H.is_span_inside_spans(x, forbidden)
+	end, sep_spans)
 
-  -- Append edge separators (assumes first and last characters are from
-  -- brackets). This allows single argument and ensures at least 2 elements.
-  table.insert(res, 1, left_bracket_span)
-  table.insert(res, right_bracket_span)
-  return res
+	-- Append edge separators (assumes first and last characters are from
+	-- brackets). This allows single argument and ensures at least 2 elements.
+	table.insert(res, 1, left_bracket_span)
+	table.insert(res, right_bracket_span)
+	return res
 end
 
 -- Work with treesitter textobject --------------------------------------------
 H.prepare_ai_captures = function(ai_captures)
-  local is_capture = function(x)
-    if type(x) == 'string' then x = { x } end
-    if not H.islist(x) then return false end
+	local is_capture = function(x)
+		if type(x) == "string" then
+			x = { x }
+		end
+		if not H.islist(x) then
+			return false
+		end
 
-    for _, v in ipairs(x) do
-      if not (type(v) == 'string' and v:sub(1, 1) == '@') then return false end
-    end
-    return true
-  end
+		for _, v in ipairs(x) do
+			if not (type(v) == "string" and v:sub(1, 1) == "@") then
+				return false
+			end
+		end
+		return true
+	end
 
-  if not (type(ai_captures) == 'table' and is_capture(ai_captures.a) and is_capture(ai_captures.i)) then
-    H.error('Wrong format for `ai_captures`. See `MiniAi.gen_spec.treesitter()` for details.')
-  end
+	if not (type(ai_captures) == "table" and is_capture(ai_captures.a) and is_capture(ai_captures.i)) then
+		H.error("Wrong format for `ai_captures`. See `MiniAi.gen_spec.treesitter()` for details.")
+	end
 
-  local prepare = function(x)
-    if type(x) == 'string' then return { x } end
-    return x
-  end
+	local prepare = function(x)
+		if type(x) == "string" then
+			return { x }
+		end
+		return x
+	end
 
-  return { a = prepare(ai_captures.a), i = prepare(ai_captures.i) }
+	return { a = prepare(ai_captures.a), i = prepare(ai_captures.i) }
 end
 
 H.get_matched_nodes_plugin = function(captures)
-  local ts_queries = require('nvim-treesitter.query')
-  return vim.tbl_map(
-    function(match) return match.node end,
-    -- This call should handle multiple languages in buffer
-    ts_queries.get_capture_matches_recursively(0, captures, 'textobjects')
-  )
+	local ts_queries = require("nvim-treesitter.query")
+	return vim.tbl_map(
+		function(match)
+			return match.node
+		end,
+		-- This call should handle multiple languages in buffer
+		ts_queries.get_capture_matches_recursively(0, captures, "textobjects")
+	)
 end
 
 H.get_matched_nodes_builtin = function(captures)
-  -- Fetch treesitter data for buffer
-  local lang = vim.bo.filetype
-  local ok, parser = pcall(vim.treesitter.get_parser, 0, lang)
-  if not ok then H.error_treesitter('parser', lang) end
+	-- Fetch treesitter data for buffer
+	local lang = vim.bo.filetype
+	local ok, parser = pcall(vim.treesitter.get_parser, 0, lang)
+	if not ok then
+		H.error_treesitter("parser", lang)
+	end
 
-  local get_query = vim.fn.has('nvim-0.9') == 1 and vim.treesitter.query.get or vim.treesitter.get_query
-  local query = get_query(lang, 'textobjects')
-  if query == nil then H.error_treesitter('query', lang) end
+	local get_query = vim.fn.has("nvim-0.9") == 1 and vim.treesitter.query.get or vim.treesitter.get_query
+	local query = get_query(lang, "textobjects")
+	if query == nil then
+		H.error_treesitter("query", lang)
+	end
 
-  -- Compute matched captures
-  captures = vim.tbl_map(function(x) return x:sub(2) end, captures)
-  local res = {}
-  for _, tree in ipairs(parser:trees()) do
-    for capture_id, node, _ in query:iter_captures(tree:root(), 0) do
-      if vim.tbl_contains(captures, query.captures[capture_id]) then table.insert(res, node) end
-    end
-  end
-  return res
+	-- Compute matched captures
+	captures = vim.tbl_map(function(x)
+		return x:sub(2)
+	end, captures)
+	local res = {}
+	for _, tree in ipairs(parser:trees()) do
+		for capture_id, node, _ in query:iter_captures(tree:root(), 0) do
+			if vim.tbl_contains(captures, query.captures[capture_id]) then
+				table.insert(res, node)
+			end
+		end
+	end
+	return res
 end
 
 H.error_treesitter = function(failed_get, lang)
-  local bufnr = vim.api.nvim_get_current_buf()
-  local msg = string.format([[Can not get %s for buffer %d and language '%s'.]], failed_get, bufnr, lang)
-  H.error(msg)
+	local bufnr = vim.api.nvim_get_current_buf()
+	local msg = string.format([[Can not get %s for buffer %d and language '%s'.]], failed_get, bufnr, lang)
+	H.error(msg)
 end
 
 -- Work with matching spans ---------------------------------------------------
@@ -1508,76 +1628,88 @@ end
 ---@param opts table Fields: <search_method>.
 ---@private
 H.find_best_match = function(neighborhood, tobj_spec, reference_span, opts)
-  local best_span, best_nested_pattern, current_nested_pattern
-  local f = function(span)
-    if H.is_better_span(span, best_span, reference_span, opts) then
-      best_span = span
-      best_nested_pattern = current_nested_pattern
-    end
-  end
+	local best_span, best_nested_pattern, current_nested_pattern
+	local f = function(span)
+		if H.is_better_span(span, best_span, reference_span, opts) then
+			best_span = span
+			best_nested_pattern = current_nested_pattern
+		end
+	end
 
-  if H.is_region_array(tobj_spec) then
-    -- Iterate over all spans representing regions in array
-    for _, region in ipairs(tobj_spec) do
-      -- Consider region only if it is completely within neighborhood
-      if neighborhood.is_region_inside(region) then f(neighborhood.region_to_span(region)) end
-    end
-  else
-    -- Iterate over all matched spans
-    for _, nested_pattern in ipairs(H.cartesian_product(tobj_spec)) do
-      current_nested_pattern = nested_pattern
-      H.iterate_matched_spans(neighborhood['1d'], nested_pattern, f)
-    end
-  end
+	if H.is_region_array(tobj_spec) then
+		-- Iterate over all spans representing regions in array
+		for _, region in ipairs(tobj_spec) do
+			-- Consider region only if it is completely within neighborhood
+			if neighborhood.is_region_inside(region) then
+				f(neighborhood.region_to_span(region))
+			end
+		end
+	else
+		-- Iterate over all matched spans
+		for _, nested_pattern in ipairs(H.cartesian_product(tobj_spec)) do
+			current_nested_pattern = nested_pattern
+			H.iterate_matched_spans(neighborhood["1d"], nested_pattern, f)
+		end
+	end
 
-  local extract_pattern
-  if best_nested_pattern ~= nil then extract_pattern = best_nested_pattern[#best_nested_pattern] end
-  return { span = best_span, extract_pattern = extract_pattern }
+	local extract_pattern
+	if best_nested_pattern ~= nil then
+		extract_pattern = best_nested_pattern[#best_nested_pattern]
+	end
+	return { span = best_span, extract_pattern = extract_pattern }
 end
 
 H.iterate_matched_spans = function(line, nested_pattern, f)
-  local max_level = #nested_pattern
-  -- Keep track of visited spans to ensure only one call of `f`.
-  -- Example: `((a) (b))`, `{'%b()', '%b()'}`
-  local visited = {}
+	local max_level = #nested_pattern
+	-- Keep track of visited spans to ensure only one call of `f`.
+	-- Example: `((a) (b))`, `{'%b()', '%b()'}`
+	local visited = {}
 
-  local process
-  process = function(level, level_line, level_offset)
-    local pattern = nested_pattern[level]
-    local next_span = function(s, init) return H.string_find(s, pattern, init) end
-    if vim.is_callable(pattern) then next_span = pattern end
+	local process
+	process = function(level, level_line, level_offset)
+		local pattern = nested_pattern[level]
+		local next_span = function(s, init)
+			return H.string_find(s, pattern, init)
+		end
+		if vim.is_callable(pattern) then
+			next_span = pattern
+		end
 
-    local is_same_balanced = type(pattern) == 'string' and pattern:match('^%%b(.)%1$') ~= nil
-    local init = 1
-    while init <= level_line:len() do
-      local from, to = next_span(level_line, init)
-      if from == nil then break end
+		local is_same_balanced = type(pattern) == "string" and pattern:match("^%%b(.)%1$") ~= nil
+		local init = 1
+		while init <= level_line:len() do
+			local from, to = next_span(level_line, init)
+			if from == nil then
+				break
+			end
 
-      if level == max_level then
-        local found_match = H.new_span(from + level_offset, to + level_offset)
-        local found_match_id = string.format('%s_%s', found_match.from, found_match.to)
-        if not visited[found_match_id] then
-          f(found_match)
-          visited[found_match_id] = true
-        end
-      else
-        local next_level_line = level_line:sub(from, to)
-        local next_level_offset = level_offset + from - 1
-        process(level + 1, next_level_line, next_level_offset)
-      end
+			if level == max_level then
+				local found_match = H.new_span(from + level_offset, to + level_offset)
+				local found_match_id = string.format("%s_%s", found_match.from, found_match.to)
+				if not visited[found_match_id] then
+					f(found_match)
+					visited[found_match_id] = true
+				end
+			else
+				local next_level_line = level_line:sub(from, to)
+				local next_level_offset = level_offset + from - 1
+				process(level + 1, next_level_line, next_level_offset)
+			end
 
-      -- Start searching from right end to implement "balanced" pair.
-      -- This doesn't work with regular balanced pattern because it doesn't
-      -- capture nested brackets.
-      init = (is_same_balanced and to or from) + 1
-    end
-  end
+			-- Start searching from right end to implement "balanced" pair.
+			-- This doesn't work with regular balanced pattern because it doesn't
+			-- capture nested brackets.
+			init = (is_same_balanced and to or from) + 1
+		end
+	end
 
-  process(1, line, 0)
+	process(1, line, 0)
 end
 
 -- NOTE: spans are end-exclusive to allow empty spans via `from == to`
-H.new_span = function(from, to) return { from = from, to = to == nil and from or (to + 1) } end
+H.new_span = function(from, to)
+	return { from = from, to = to == nil and from or (to + 1) }
+end
 
 ---@param candidate table Candidate span to test against `current`.
 ---@param current table|nil Current best span.
@@ -1585,114 +1717,160 @@ H.new_span = function(from, to) return { from = from, to = to == nil and from or
 ---@param opts table Fields: <search_method>.
 ---@private
 H.is_better_span = function(candidate, current, reference, opts)
-  -- Candidate should be never equal or nested inside reference
-  if H.is_span_covering(reference, candidate) or H.is_span_equal(candidate, reference) then return false end
+	-- Candidate should be never equal or nested inside reference
+	if H.is_span_covering(reference, candidate) or H.is_span_equal(candidate, reference) then
+		return false
+	end
 
-  return H.span_compare_methods[opts.search_method](candidate, current, reference)
+	return H.span_compare_methods[opts.search_method](candidate, current, reference)
 end
 
 H.span_compare_methods = {
-  cover = function(candidate, current, reference)
-    local res = H.is_better_covering_span(candidate, current, reference)
-    if res ~= nil then return res end
-    -- If both are not covering, `candidate` is not better (as it must cover)
-    return false
-  end,
+	cover = function(candidate, current, reference)
+		local res = H.is_better_covering_span(candidate, current, reference)
+		if res ~= nil then
+			return res
+		end
+		-- If both are not covering, `candidate` is not better (as it must cover)
+		return false
+	end,
 
-  cover_or_next = function(candidate, current, reference)
-    local res = H.is_better_covering_span(candidate, current, reference)
-    if res ~= nil then return res end
+	cover_or_next = function(candidate, current, reference)
+		local res = H.is_better_covering_span(candidate, current, reference)
+		if res ~= nil then
+			return res
+		end
 
-    -- If not covering, `candidate` must be "next" and closer to reference
-    if not H.is_span_on_left(reference, candidate) then return false end
-    if current == nil then return true end
+		-- If not covering, `candidate` must be "next" and closer to reference
+		if not H.is_span_on_left(reference, candidate) then
+			return false
+		end
+		if current == nil then
+			return true
+		end
 
-    local dist = H.span_distance.next
-    return dist(candidate, reference) < dist(current, reference)
-  end,
+		local dist = H.span_distance.next
+		return dist(candidate, reference) < dist(current, reference)
+	end,
 
-  cover_or_prev = function(candidate, current, reference)
-    local res = H.is_better_covering_span(candidate, current, reference)
-    if res ~= nil then return res end
+	cover_or_prev = function(candidate, current, reference)
+		local res = H.is_better_covering_span(candidate, current, reference)
+		if res ~= nil then
+			return res
+		end
 
-    -- If not covering, `candidate` must be "previous" and closer to reference
-    if not H.is_span_on_left(candidate, reference) then return false end
-    if current == nil then return true end
+		-- If not covering, `candidate` must be "previous" and closer to reference
+		if not H.is_span_on_left(candidate, reference) then
+			return false
+		end
+		if current == nil then
+			return true
+		end
 
-    local dist = H.span_distance.prev
-    return dist(candidate, reference) < dist(current, reference)
-  end,
+		local dist = H.span_distance.prev
+		return dist(candidate, reference) < dist(current, reference)
+	end,
 
-  cover_or_nearest = function(candidate, current, reference)
-    local res = H.is_better_covering_span(candidate, current, reference)
-    if res ~= nil then return res end
+	cover_or_nearest = function(candidate, current, reference)
+		local res = H.is_better_covering_span(candidate, current, reference)
+		if res ~= nil then
+			return res
+		end
 
-    -- If not covering, `candidate` must be closer to reference
-    if current == nil then return true end
+		-- If not covering, `candidate` must be closer to reference
+		if current == nil then
+			return true
+		end
 
-    local dist = H.span_distance.near
-    return dist(candidate, reference) < dist(current, reference)
-  end,
+		local dist = H.span_distance.near
+		return dist(candidate, reference) < dist(current, reference)
+	end,
 
-  next = function(candidate, current, reference)
-    if H.is_span_covering(candidate, reference) then return false end
+	next = function(candidate, current, reference)
+		if H.is_span_covering(candidate, reference) then
+			return false
+		end
 
-    -- `candidate` must be "next" and closer to reference
-    if not H.is_span_on_left(reference, candidate) then return false end
-    if current == nil then return true end
+		-- `candidate` must be "next" and closer to reference
+		if not H.is_span_on_left(reference, candidate) then
+			return false
+		end
+		if current == nil then
+			return true
+		end
 
-    local dist = H.span_distance.next
-    return dist(candidate, reference) < dist(current, reference)
-  end,
+		local dist = H.span_distance.next
+		return dist(candidate, reference) < dist(current, reference)
+	end,
 
-  prev = function(candidate, current, reference)
-    if H.is_span_covering(candidate, reference) then return false end
+	prev = function(candidate, current, reference)
+		if H.is_span_covering(candidate, reference) then
+			return false
+		end
 
-    -- `candidate` must be "previous" and closer to reference
-    if not H.is_span_on_left(candidate, reference) then return false end
-    if current == nil then return true end
+		-- `candidate` must be "previous" and closer to reference
+		if not H.is_span_on_left(candidate, reference) then
+			return false
+		end
+		if current == nil then
+			return true
+		end
 
-    local dist = H.span_distance.prev
-    return dist(candidate, reference) < dist(current, reference)
-  end,
+		local dist = H.span_distance.prev
+		return dist(candidate, reference) < dist(current, reference)
+	end,
 
-  nearest = function(candidate, current, reference)
-    if H.is_span_covering(candidate, reference) then return false end
+	nearest = function(candidate, current, reference)
+		if H.is_span_covering(candidate, reference) then
+			return false
+		end
 
-    -- `candidate` must be closer to reference
-    if current == nil then return true end
+		-- `candidate` must be closer to reference
+		if current == nil then
+			return true
+		end
 
-    local dist = H.span_distance.near
-    return dist(candidate, reference) < dist(current, reference)
-  end,
+		local dist = H.span_distance.near
+		return dist(candidate, reference) < dist(current, reference)
+	end,
 }
 
 H.span_distance = {
-  -- Other possible choices of distance between [a1, a2] and [b1, b2]:
-  -- - Hausdorff distance: max(|a1 - b1|, |a2 - b2|).
-  --   Source:
-  --   https://math.stackexchange.com/questions/41269/distance-between-two-ranges
-  -- - Minimum distance: min(|a1 - b1|, |a2 - b2|).
+	-- Other possible choices of distance between [a1, a2] and [b1, b2]:
+	-- - Hausdorff distance: max(|a1 - b1|, |a2 - b2|).
+	--   Source:
+	--   https://math.stackexchange.com/questions/41269/distance-between-two-ranges
+	-- - Minimum distance: min(|a1 - b1|, |a2 - b2|).
 
-  -- Distance is chosen so that "next span" in certain direction is the closest
-  next = function(span_1, span_2) return math.abs(span_1.from - span_2.from) end,
-  prev = function(span_1, span_2) return math.abs(span_1.to - span_2.to) end,
-  near = function(span_1, span_2) return math.min(math.abs(span_1.from - span_2.from), math.abs(span_1.to - span_2.to)) end,
+	-- Distance is chosen so that "next span" in certain direction is the closest
+	next = function(span_1, span_2)
+		return math.abs(span_1.from - span_2.from)
+	end,
+	prev = function(span_1, span_2)
+		return math.abs(span_1.to - span_2.to)
+	end,
+	near = function(span_1, span_2)
+		return math.min(math.abs(span_1.from - span_2.from), math.abs(span_1.to - span_2.to))
+	end,
 }
 
 H.is_better_covering_span = function(candidate, current, reference)
-  local candidate_is_covering = H.is_span_covering(candidate, reference)
-  local current_is_covering = H.is_span_covering(current, reference)
+	local candidate_is_covering = H.is_span_covering(candidate, reference)
+	local current_is_covering = H.is_span_covering(current, reference)
 
-  if candidate_is_covering and current_is_covering then
-    -- Covering candidate is better than covering current if it is narrower
-    return (candidate.to - candidate.from) < (current.to - current.from)
-  end
-  if candidate_is_covering and not current_is_covering then return true end
-  if not candidate_is_covering and current_is_covering then return false end
+	if candidate_is_covering and current_is_covering then
+		-- Covering candidate is better than covering current if it is narrower
+		return (candidate.to - candidate.from) < (current.to - current.from)
+	end
+	if candidate_is_covering and not current_is_covering then
+		return true
+	end
+	if not candidate_is_covering and current_is_covering then
+		return false
+	end
 
-  -- Return `nil` if neither span is covering
-  return nil
+	-- Return `nil` if neither span is covering
+	return nil
 end
 
 --stylua: ignore
@@ -1709,51 +1887,61 @@ H.is_span_covering = function(span, span_to_cover)
 end
 
 H.is_span_equal = function(span_1, span_2)
-  if span_1 == nil or span_2 == nil then return false end
-  return (span_1.from == span_2.from) and (span_1.to == span_2.to)
+	if span_1 == nil or span_2 == nil then
+		return false
+	end
+	return (span_1.from == span_2.from) and (span_1.to == span_2.to)
 end
 
 H.is_span_on_left = function(span_1, span_2)
-  if span_1 == nil or span_2 == nil then return false end
-  return (span_1.from <= span_2.from) and (span_1.to <= span_2.to)
+	if span_1 == nil or span_2 == nil then
+		return false
+	end
+	return (span_1.from <= span_2.from) and (span_1.to <= span_2.to)
 end
 
 H.is_span_inside_spans = function(ref_span, spans)
-  for _, span in ipairs(spans) do
-    if span[1] <= ref_span[1] and ref_span[2] <= span[2] then return true end
-  end
-  return false
+	for _, span in ipairs(spans) do
+		if span[1] <= ref_span[1] and ref_span[2] <= span[2] then
+			return true
+		end
+	end
+	return false
 end
 
 -- Work with Lua patterns -----------------------------------------------------
 H.extract_span = function(s, extract_pattern, ai_type)
-  local positions = { s:match(extract_pattern) }
+	local positions = { s:match(extract_pattern) }
 
-  if #positions == 1 and type(positions[1]) == 'string' then
-    if s:len() == 0 then return H.new_span(0, 0) end
-    return H.new_span(1, s:len())
-  end
+	if #positions == 1 and type(positions[1]) == "string" then
+		if s:len() == 0 then
+			return H.new_span(0, 0)
+		end
+		return H.new_span(1, s:len())
+	end
 
-  local is_all_numbers = true
-  for _, pos in ipairs(positions) do
-    if type(pos) ~= 'number' then is_all_numbers = false end
-  end
+	local is_all_numbers = true
+	for _, pos in ipairs(positions) do
+		if type(pos) ~= "number" then
+			is_all_numbers = false
+		end
+	end
 
-  local is_valid_positions = is_all_numbers and (#positions == 2 or #positions == 4)
-  if not is_valid_positions then
-    local msg = 'Could not extract proper positions (two or four empty captures) from '
-      .. string.format([[string '%s' with extraction pattern '%s'.]], s, extract_pattern)
-    H.error(msg)
-  end
+	local is_valid_positions = is_all_numbers and (#positions == 2 or #positions == 4)
+	if not is_valid_positions then
+		local msg = "Could not extract proper positions (two or four empty captures) from "
+			.. string.format([[string '%s' with extraction pattern '%s'.]], s, extract_pattern)
+		H.error(msg)
+	end
 
-  local ai_spans
-  if #positions == 2 then
-    ai_spans = { a = H.new_span(1, s:len()), i = H.new_span(positions[1], positions[2] - 1) }
-  else
-    ai_spans = { a = H.new_span(positions[1], positions[4] - 1), i = H.new_span(positions[2], positions[3] - 1) }
-  end
+	local ai_spans
+	if #positions == 2 then
+		ai_spans = { a = H.new_span(1, s:len()), i = H.new_span(positions[1], positions[2] - 1) }
+	else
+		ai_spans = { a = H.new_span(positions[1], positions[4] - 1), i = H.new_span(positions[2], positions[3] - 1) }
+	end
 
-  return ai_spans[ai_type]
+	return ai_spans[ai_type]
 end
 
 -- Work with cursor neighborhood ----------------------------------------------
@@ -1762,266 +1950,316 @@ end
 ---   start line and after end line.
 ---@private
 H.get_neighborhood = function(reference_region, n_neighbors)
-  -- Compute '2d neighborhood' of (possibly empty) region
-  local from_line, to_line = reference_region.from.line, (reference_region.to or reference_region.from).line
-  local line_start = math.max(1, from_line - n_neighbors)
-  local line_end = math.min(vim.api.nvim_buf_line_count(0), to_line + n_neighbors)
-  local neigh2d = vim.api.nvim_buf_get_lines(0, line_start - 1, line_end, false)
-  -- Append 'newline' character to distinguish between lines in 1d case
-  for k, v in pairs(neigh2d) do
-    neigh2d[k] = v .. '\n'
-  end
+	-- Compute '2d neighborhood' of (possibly empty) region
+	local from_line, to_line = reference_region.from.line, (reference_region.to or reference_region.from).line
+	local line_start = math.max(1, from_line - n_neighbors)
+	local line_end = math.min(vim.api.nvim_buf_line_count(0), to_line + n_neighbors)
+	local neigh2d = vim.api.nvim_buf_get_lines(0, line_start - 1, line_end, false)
+	-- Append 'newline' character to distinguish between lines in 1d case
+	for k, v in pairs(neigh2d) do
+		neigh2d[k] = v .. "\n"
+	end
 
-  -- '1d neighborhood': position is determined by offset from start
-  local neigh1d = table.concat(neigh2d, '')
+	-- '1d neighborhood': position is determined by offset from start
+	local neigh1d = table.concat(neigh2d, "")
 
-  -- Convert 2d buffer position to 1d offset
-  local pos_to_offset = function(pos)
-    if pos == nil then return nil end
-    local line_num = line_start
-    local offset = 0
-    while line_num < pos.line do
-      offset = offset + neigh2d[line_num - line_start + 1]:len()
-      line_num = line_num + 1
-    end
+	-- Convert 2d buffer position to 1d offset
+	local pos_to_offset = function(pos)
+		if pos == nil then
+			return nil
+		end
+		local line_num = line_start
+		local offset = 0
+		while line_num < pos.line do
+			offset = offset + neigh2d[line_num - line_start + 1]:len()
+			line_num = line_num + 1
+		end
 
-    return offset + pos.col
-  end
+		return offset + pos.col
+	end
 
-  -- Convert 1d offset to 2d buffer position
-  local offset_to_pos = function(offset)
-    if offset == nil then return nil end
-    local line_num = 1
-    local line_offset = 0
-    while line_num <= #neigh2d and line_offset + neigh2d[line_num]:len() < offset do
-      line_offset = line_offset + neigh2d[line_num]:len()
-      line_num = line_num + 1
-    end
+	-- Convert 1d offset to 2d buffer position
+	local offset_to_pos = function(offset)
+		if offset == nil then
+			return nil
+		end
+		local line_num = 1
+		local line_offset = 0
+		while line_num <= #neigh2d and line_offset + neigh2d[line_num]:len() < offset do
+			line_offset = line_offset + neigh2d[line_num]:len()
+			line_num = line_num + 1
+		end
 
-    return { line = line_start + line_num - 1, col = offset - line_offset }
-  end
+		return { line = line_start + line_num - 1, col = offset - line_offset }
+	end
 
-  -- Convert 2d region to 1d span
-  local region_to_span = function(region)
-    if region == nil then return nil end
-    local is_empty = region.to == nil
-    local to = region.to or region.from
-    return { from = pos_to_offset(region.from), to = pos_to_offset(to) + (is_empty and 0 or 1) }
-  end
+	-- Convert 2d region to 1d span
+	local region_to_span = function(region)
+		if region == nil then
+			return nil
+		end
+		local is_empty = region.to == nil
+		local to = region.to or region.from
+		return { from = pos_to_offset(region.from), to = pos_to_offset(to) + (is_empty and 0 or 1) }
+	end
 
-  -- Convert 1d span to 2d region
-  local span_to_region = function(span)
-    if span == nil then return nil end
-    -- NOTE: this might lead to outside of line positions due to added `\n` at
-    -- the end of lines in 1d-neighborhood. However, this is crucial for
-    -- allowing `i` textobjects to collapse multiline selections.
-    local res = { from = offset_to_pos(span.from) }
+	-- Convert 1d span to 2d region
+	local span_to_region = function(span)
+		if span == nil then
+			return nil
+		end
+		-- NOTE: this might lead to outside of line positions due to added `\n` at
+		-- the end of lines in 1d-neighborhood. However, this is crucial for
+		-- allowing `i` textobjects to collapse multiline selections.
+		local res = { from = offset_to_pos(span.from) }
 
-    -- Convert empty span to empty region
-    if span.from < span.to then res.to = offset_to_pos(span.to - 1) end
-    return res
-  end
+		-- Convert empty span to empty region
+		if span.from < span.to then
+			res.to = offset_to_pos(span.to - 1)
+		end
+		return res
+	end
 
-  local is_region_inside = function(region)
-    local res = line_start <= region.from.line
-    if region.to ~= nil then res = res and (region.to.line <= line_end) end
-    return res
-  end
+	local is_region_inside = function(region)
+		local res = line_start <= region.from.line
+		if region.to ~= nil then
+			res = res and (region.to.line <= line_end)
+		end
+		return res
+	end
 
-  return {
-    n_neighbors = n_neighbors,
-    region = reference_region,
-    ['1d'] = neigh1d,
-    ['2d'] = neigh2d,
-    pos_to_offset = pos_to_offset,
-    offset_to_pos = offset_to_pos,
-    region_to_span = region_to_span,
-    span_to_region = span_to_region,
-    is_region_inside = is_region_inside,
-  }
+	return {
+		n_neighbors = n_neighbors,
+		region = reference_region,
+		["1d"] = neigh1d,
+		["2d"] = neigh2d,
+		pos_to_offset = pos_to_offset,
+		offset_to_pos = offset_to_pos,
+		region_to_span = region_to_span,
+		span_to_region = span_to_region,
+		is_region_inside = is_region_inside,
+	}
 end
 
 -- Work with user input -------------------------------------------------------
 H.user_textobject_id = function(ai_type)
-  -- Get from user single character textobject identifier
-  local needs_help_msg = true
-  vim.defer_fn(function()
-    if not needs_help_msg then return end
+	-- Get from user single character textobject identifier
+	local needs_help_msg = true
+	vim.defer_fn(function()
+		if not needs_help_msg then
+			return
+		end
 
-    local msg = string.format('Enter `%s` textobject identifier (single character) ', ai_type)
-    H.echo(msg)
-    H.cache.msg_shown = true
-  end, 1000)
-  local ok, char = pcall(vim.fn.getcharstr)
-  needs_help_msg = false
-  H.unecho()
+		local msg = string.format("Enter `%s` textobject identifier (single character) ", ai_type)
+		H.echo(msg)
+		H.cache.msg_shown = true
+	end, 1000)
+	local ok, char = pcall(vim.fn.getcharstr)
+	needs_help_msg = false
+	H.unecho()
 
-  -- Terminate if couldn't get input (like with <C-c>) or it is `<Esc>`
-  if not ok or char == '\27' then return nil end
+	-- Terminate if couldn't get input (like with <C-c>) or it is `<Esc>`
+	if not ok or char == "\27" then
+		return nil
+	end
 
-  if char:find('^[%w%p%s]$') == nil then
-    H.message('Input must be single character: alphanumeric, punctuation, or space.')
-    return nil
-  end
+	if char:find("^[%w%p%s]$") == nil then
+		H.message("Input must be single character: alphanumeric, punctuation, or space.")
+		return nil
+	end
 
-  return char
+	return char
 end
 
 H.user_input = function(prompt, text)
-  -- Register temporary keystroke listener to distinguish between cancel with
-  -- `<Esc>` and immediate `<CR>`.
-  local on_key = vim.on_key or vim.register_keystroke_callback
-  local was_cancelled = false
-  on_key(function(key)
-    if key == '27' then was_cancelled = true end
-  end, H.ns_id.input)
+	-- Register temporary keystroke listener to distinguish between cancel with
+	-- `<Esc>` and immediate `<CR>`.
+	local on_key = vim.on_key or vim.register_keystroke_callback
+	local was_cancelled = false
+	on_key(function(key)
+		if key == "27" then
+			was_cancelled = true
+		end
+	end, H.ns_id.input)
 
-  -- Ask for input
-  local opts = { prompt = '(mini.ai) ' .. prompt .. ': ', default = text or '' }
-  vim.cmd('echohl Question')
-  -- Use `pcall` to allow `<C-c>` to cancel user input
-  local ok, res = pcall(vim.fn.input, opts)
-  vim.cmd([[echohl None | echo '' | redraw]])
+	-- Ask for input
+	local opts = { prompt = "(mini.ai) " .. prompt .. ": ", default = text or "" }
+	vim.cmd("echohl Question")
+	-- Use `pcall` to allow `<C-c>` to cancel user input
+	local ok, res = pcall(vim.fn.input, opts)
+	vim.cmd([[echohl None | echo '' | redraw]])
 
-  -- Stop key listening
-  on_key(nil, H.ns_id.input)
+	-- Stop key listening
+	on_key(nil, H.ns_id.input)
 
-  if not ok or was_cancelled then return end
-  return res
+	if not ok or was_cancelled then
+		return
+	end
+	return res
 end
 
 -- Work with Visual mode ------------------------------------------------------
 H.is_visual_mode = function(mode)
-  mode = mode or vim.fn.mode()
-  -- '\22' is an escaped `<C-v>`
-  return mode == 'v' or mode == 'V' or mode == '\22', mode
+	mode = mode or vim.fn.mode()
+	-- '\22' is an escaped `<C-v>`
+	return mode == "v" or mode == "V" or mode == "\22", mode
 end
 
 H.exit_to_normal_mode = function()
-  -- Don't use `<C-\><C-n>` in command-line window as they close it
-  if vim.fn.getcmdwintype() ~= '' then
-    local is_vis, cur_mode = H.is_visual_mode()
-    if is_vis then vim.cmd('normal! ' .. cur_mode) end
-  else
-    -- '\28\14' is an escaped version of `<C-\><C-n>`
-    vim.cmd('normal! \28\14')
-  end
+	-- Don't use `<C-\><C-n>` in command-line window as they close it
+	if vim.fn.getcmdwintype() ~= "" then
+		local is_vis, cur_mode = H.is_visual_mode()
+		if is_vis then
+			vim.cmd("normal! " .. cur_mode)
+		end
+	else
+		-- '\28\14' is an escaped version of `<C-\><C-n>`
+		vim.cmd("normal! \28\14")
+	end
 end
 
 H.get_visual_region = function()
-  local is_vis, _ = H.is_visual_mode()
-  if not is_vis then return end
-  local res = {
-    from = { line = vim.fn.line('v'), col = vim.fn.col('v') },
-    to = { line = vim.fn.line('.'), col = vim.fn.col('.') },
-  }
-  if res.from.line > res.to.line or (res.from.line == res.to.line and res.from.col > res.to.col) then
-    res = { from = res.to, to = res.from }
-  end
-  return res
+	local is_vis, _ = H.is_visual_mode()
+	if not is_vis then
+		return
+	end
+	local res = {
+		from = { line = vim.fn.line("v"), col = vim.fn.col("v") },
+		to = { line = vim.fn.line("."), col = vim.fn.col(".") },
+	}
+	if res.from.line > res.to.line or (res.from.line == res.to.line and res.from.col > res.to.col) then
+		res = { from = res.to, to = res.from }
+	end
+	return res
 end
 
 -- Utilities ------------------------------------------------------------------
 H.echo = function(msg, is_important)
-  if H.get_config().silent then return end
+	if H.get_config().silent then
+		return
+	end
 
-  -- Construct message chunks
-  msg = type(msg) == 'string' and { { msg } } or msg
-  table.insert(msg, 1, { '(mini.ai) ', 'WarningMsg' })
+	-- Construct message chunks
+	msg = type(msg) == "string" and { { msg } } or msg
+	table.insert(msg, 1, { "(mini.ai) ", "WarningMsg" })
 
-  -- Avoid hit-enter-prompt
-  local max_width = vim.o.columns * math.max(vim.o.cmdheight - 1, 0) + vim.v.echospace
-  local chunks, tot_width = {}, 0
-  for _, ch in ipairs(msg) do
-    local new_ch = { vim.fn.strcharpart(ch[1], 0, max_width - tot_width), ch[2] }
-    table.insert(chunks, new_ch)
-    tot_width = tot_width + vim.fn.strdisplaywidth(new_ch[1])
-    if tot_width >= max_width then break end
-  end
+	-- Avoid hit-enter-prompt
+	local max_width = vim.o.columns * math.max(vim.o.cmdheight - 1, 0) + vim.v.echospace
+	local chunks, tot_width = {}, 0
+	for _, ch in ipairs(msg) do
+		local new_ch = { vim.fn.strcharpart(ch[1], 0, max_width - tot_width), ch[2] }
+		table.insert(chunks, new_ch)
+		tot_width = tot_width + vim.fn.strdisplaywidth(new_ch[1])
+		if tot_width >= max_width then
+			break
+		end
+	end
 
-  -- Echo. Force redraw to ensure that it is effective (`:h echo-redraw`)
-  vim.cmd([[echo '' | redraw]])
-  vim.api.nvim_echo(chunks, is_important, {})
+	-- Echo. Force redraw to ensure that it is effective (`:h echo-redraw`)
+	vim.cmd([[echo '' | redraw]])
+	vim.api.nvim_echo(chunks, is_important, {})
 end
 
 H.unecho = function()
-  if H.cache.msg_shown then vim.cmd([[echo '' | redraw]]) end
+	if H.cache.msg_shown then
+		vim.cmd([[echo '' | redraw]])
+	end
 end
 
-H.message = function(msg) H.echo(msg, true) end
+H.message = function(msg)
+	H.echo(msg, true)
+end
 
-H.error = function(msg) error(string.format('(mini.ai) %s', msg), 0) end
+H.error = function(msg)
+	error(string.format("(mini.ai) %s", msg), 0)
+end
 
 H.map = function(mode, lhs, rhs, opts)
-  if lhs == '' then return end
-  opts = vim.tbl_deep_extend('force', { silent = true }, opts or {})
-  vim.keymap.set(mode, lhs, rhs, opts)
+	if lhs == "" then
+		return
+	end
+	opts = vim.tbl_deep_extend("force", { silent = true }, opts or {})
+	vim.keymap.set(mode, lhs, rhs, opts)
 end
 
 H.string_find = function(s, pattern, init)
-  init = init or 1
+	init = init or 1
 
-  -- Match only start of full string if pattern says so.
-  -- This is needed because `string.find()` doesn't do this.
-  -- Example: `string.find('(aaa)', '^.*$', 4)` returns `4, 5`
-  if pattern:sub(1, 1) == '^' then
-    if init > 1 then return nil end
-    return string.find(s, pattern)
-  end
+	-- Match only start of full string if pattern says so.
+	-- This is needed because `string.find()` doesn't do this.
+	-- Example: `string.find('(aaa)', '^.*$', 4)` returns `4, 5`
+	if pattern:sub(1, 1) == "^" then
+		if init > 1 then
+			return nil
+		end
+		return string.find(s, pattern)
+	end
 
-  -- Handle patterns `x.-y` differently: make match as small as possible. This
-  -- doesn't allow `x` be present inside `.-` match, just as with `yyy`. Which
-  -- also leads to a behavior similar to punctuation id (like with `va_`): no
-  -- covering is possible, only next, previous, or nearest.
-  local check_left, _, prev = string.find(pattern, '(.)%.%-')
-  local is_pattern_special = check_left ~= nil and prev ~= '%'
-  if not is_pattern_special then return string.find(s, pattern, init) end
+	-- Handle patterns `x.-y` differently: make match as small as possible. This
+	-- doesn't allow `x` be present inside `.-` match, just as with `yyy`. Which
+	-- also leads to a behavior similar to punctuation id (like with `va_`): no
+	-- covering is possible, only next, previous, or nearest.
+	local check_left, _, prev = string.find(pattern, "(.)%.%-")
+	local is_pattern_special = check_left ~= nil and prev ~= "%"
+	if not is_pattern_special then
+		return string.find(s, pattern, init)
+	end
 
-  -- Make match as small as possible
-  local from, to = string.find(s, pattern, init)
-  if from == nil then return end
+	-- Make match as small as possible
+	local from, to = string.find(s, pattern, init)
+	if from == nil then
+		return
+	end
 
-  local cur_from, cur_to = from, to
-  while cur_to == to do
-    from, to = cur_from, cur_to
-    cur_from, cur_to = string.find(s, pattern, cur_from + 1)
-  end
+	local cur_from, cur_to = from, to
+	while cur_to == to do
+		from, to = cur_from, cur_to
+		cur_from, cur_to = string.find(s, pattern, cur_from + 1)
+	end
 
-  return from, to
+	return from, to
 end
 
 ---@param arr table List of items. If item is list, consider as set for
 ---   product. Else - make it single item list.
 ---@private
 H.cartesian_product = function(arr)
-  if not (type(arr) == 'table' and #arr > 0) then return {} end
-  arr = vim.tbl_map(function(x) return H.islist(x) and x or { x } end, arr)
+	if not (type(arr) == "table" and #arr > 0) then
+		return {}
+	end
+	arr = vim.tbl_map(function(x)
+		return H.islist(x) and x or { x }
+	end, arr)
 
-  local res, cur_item = {}, {}
-  local process
-  process = function(level)
-    for i = 1, #arr[level] do
-      table.insert(cur_item, arr[level][i])
-      if level == #arr then
-        -- Flatten array to allow tables as elements of step tables
-        table.insert(res, vim.tbl_flatten(cur_item))
-      else
-        process(level + 1)
-      end
-      table.remove(cur_item, #cur_item)
-    end
-  end
+	local res, cur_item = {}, {}
+	local process
+	process = function(level)
+		for i = 1, #arr[level] do
+			table.insert(cur_item, arr[level][i])
+			if level == #arr then
+				-- Flatten array to allow tables as elements of step tables
+				table.insert(res, vim.tbl_flatten(cur_item))
+			else
+				process(level + 1)
+			end
+			table.remove(cur_item, #cur_item)
+		end
+	end
 
-  process(1)
-  return res
+	process(1)
+	return res
 end
 
 H.wrap_callable_table = function(x)
-  if vim.is_callable(x) and type(x) == 'table' then return function(...) return x(...) end end
-  return x
+	if vim.is_callable(x) and type(x) == "table" then
+		return function(...)
+			return x(...)
+		end
+	end
+	return x
 end
 
 -- TODO: Remove after compatibility with Neovim=0.9 is dropped
-H.islist = vim.fn.has('nvim-0.10') == 1 and vim.islist or vim.tbl_islist
+H.islist = vim.fn.has("nvim-0.10") == 1 and vim.islist or vim.tbl_islist
 
 return MiniAi

@@ -547,6 +547,9 @@ MiniAi.config = {
 ---@return table|nil Region of textobject or `nil` if no textobject different
 ---   from `opts.reference_region` was consecutively found `opts.n_times` times.
 MiniAi.find_textobject = function(ai_type, id, opts)
+	if id == "a" and opts.search_method ~= "next" and opts.search_method ~= "prev" then
+		opts.search_method = "cover"
+	end
 	if not (ai_type == "a" or ai_type == "i") then
 		H.error([[`ai_type` should be one of 'a' or 'i'.]])
 	end

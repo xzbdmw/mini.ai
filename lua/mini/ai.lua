@@ -1005,6 +1005,24 @@ MiniAi.select_textobject = function(ai_type, id, opts)
 		return
 	end
 
+	local comment = vim.split(vim.bo.commentstring, " ")[1]:sub(1, 1)
+	if id == "f" and ai_type == "a" and comment ~= "" then
+		for i = tobj.from.line, 1, -1 do
+			local line = vim.api.nvim_buf_get_lines(0, i - 1, i, false)[1]
+			if line ~= nil then
+				if line:len() == 0 then
+					break
+				end
+				if line:match("^%s*" .. comment) then
+					tobj.from.line = i
+					tobj.from.col = 1
+					goto continue
+				end
+			end
+			::continue::
+		end
+	end
+
 	local set_cursor = function(position)
 		vim.api.nvim_win_set_cursor(0, { position.line, position.col - 1 })
 	end

@@ -1050,7 +1050,10 @@ MiniAi.select_textobject = function(ai_type, id, opts)
 		-- possible empty region selection implementation.
 		local is_empty_opending = tobj_is_empty and opts.operator_pending
 		local is_minioperators_replace = vim.v.operator == "g@"
-			and vim.o.operatorfunc:find("MiniOperators%.replace") ~= nil
+			and (
+				vim.o.operatorfunc:find("MiniOperators%.replace") ~= nil
+				or vim.o.operatorfunc:find("substitute") ~= nil
+			)
 		local is_allowed_empty_opending = vim.v.operator == "c" or vim.v.operator == "d" or is_minioperators_replace
 		if is_empty_opending and not is_allowed_empty_opending then
 			H.message("Textobject region is empty. Nothing is done.")

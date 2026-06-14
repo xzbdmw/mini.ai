@@ -834,7 +834,16 @@ MiniAi.gen_spec.function_call = function(opts)
 	opts = vim.tbl_deep_extend("force", { name_pattern = "[%w_%.]" }, opts or {})
 	-- Use frontier pattern to select widest possible name
 	return { "%f" .. opts.name_pattern .. opts.name_pattern .. "+%b()", "^.-%(().*()%)$" }
+	-- return { "%f" .. opts.name_pattern .. opts.name_pattern .. "+%b<>", "^.-<().*()>$" }
 end
+
+vim.keymap.set("n", "<d-y>", function()
+	local s = "Some.hello<asdas>"
+	local pattern = "%f[%w_%.][%w_%.]+%b<>"
+	local res = string.match(s, pattern)
+	-- __AUTO_GENERATED_PRINT_VAR_START__
+	print([==[function res:]==], vim.inspect(res)) -- __AUTO_GENERATED_PRINT_VAR_END__
+end)
 
 --- Pair specification
 ---
@@ -1013,7 +1022,7 @@ MiniAi.select_textobject = function(ai_type, id, opts)
 				if line:len() == 0 then
 					break
 				end
-				if line:match("^%s*" .. comment) then
+				if line:match("^%s*" .. comment) or (vim.bo.filetype == "rust" and line:match("^%s*#")) then
 					tobj.from.line = i
 					tobj.from.col = 1
 					goto continue
